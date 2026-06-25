@@ -40,54 +40,104 @@ npm link
 ```
 $ f1 schedule
 
-  Upcoming F1 Races
-
-┌─────┬──────────────────────────────┬──────────────────┬──────────────────┬──────────────────────┬──────────────────────┐
-│ #   │ Grand Prix                    │ Location         │ Circuit          │ Qualifying           │ Race                 │
-├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 1   │ British Grand Prix            │ Silverstone      │ Silverstone      │ Sat, 5 Jul 2025      │ Sun, 6 Jul 2025      │
-│     │                              │                  │                  │ 15:00 UTC+1          │ 15:00 UTC+1          │
-├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 2   │ Hungarian Grand Prix          │ Budapest         │ Hungaroring      │ Sat, 19 Jul 2025     │ Sun, 20 Jul 2025     │
-│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
-├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 3   │ Belgian Grand Prix            │ Spa              │ Spa-Francorchamps│ Sat, 26 Jul 2025     │ Sun, 27 Jul 2025     │
-│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
-├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 4   │ Dutch Grand Prix              │ Zandvoort        │ Zandvoort        │ Sat, 2 Aug 2025      │ Sun, 3 Aug 2025      │
-│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
-├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 5   │ Italian Grand Prix            │ Monza            │ Monza            │ Sat, 6 Sep 2025      │ Sun, 7 Sep 2025      │
-│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
-└─────┴──────────────────────────────┴──────────────────┴──────────────────┴──────────────────────┴──────────────────────┘
+──── Upcoming
+┌─────┬────────────────────────────┬──────────────────┬──────────────────┬────────────────────────┬────────────────────────┐
+│ #   │ Grand Prix                 │ Location         │ Circuit          │ Qualifying             │ Race                   │
+├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
+│ 10  │ Austrian Grand Prix        │ Spielberg        │ Spielberg        │ Sat, 27 Jun 2026, 16:… │ Sun, 28 Jun 2026, 15:… │
+├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
+│ 11  │ British Grand Prix         │ Silverstone      │ Silverstone      │ Fri, 3 Jul 2026, 16:30 │ Sat, 4 Jul 2026, 12:00 │
+├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
+│ 12  │ Belgian Grand Prix         │ Spa-Francorchamps│ Spa-Francorchamps│ Sat, 18 Jul 2026, 16:… │ Sun, 19 Jul 2026, 15:… │
+├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
+│ 13  │ Hungarian Grand Prix       │ Budapest         │ Hungaroring      │ Sat, 25 Jul 2026, 16:… │ Sun, 26 Jul 2026, 15:… │
+├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
+│ 14  │ Dutch Grand Prix           │ Zandvoort        │ Zandvoort        │ Fri, 21 Aug 2026, 16:… │ Sat, 22 Aug 2026, 12:… │
+└─────┴────────────────────────────┴──────────────────┴──────────────────┴────────────────────────┴────────────────────────┘
 ```
 
 ```
-$ f1 last
+$ f1 standings
 
-  Last Race: FORMULA 1 AWS GRAND PRIX DU CANADA 2025
+  2026 Formula 1 Championship Standings
 
-  Winner: Lando Norris (McLaren)
-  Time:   1:35
-  2nd:    Max Verstappen (Red Bull Racing)
-  3rd:    Charles Leclerc (Ferrari)
+  Drivers Championship
+  ──── Drivers Championship
+┌───────┬──────────────────────────────┬──────────┬────────┐
+│ Pos   │ Name                         │ Points   │ Chg    │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥇 1  │ Kimi ANTONELLI               │ 156      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥈 2  │ Lewis HAMILTON               │ 115      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥉 3  │ George RUSSELL               │ 106      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 4     │ Charles LECLERC              │ 75       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 5     │ Lando NORRIS                 │ 73       │ +1     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 6     │ Oscar PIASTRI                │ 68       │ -1     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 7     │ Max VERSTAPPEN               │ 55       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 8     │ Pierre GASLY                 │ 41       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 9     │ Isack HADJAR                 │ 34       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 10    │ Liam LAWSON                  │ 28       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 11    │ Oliver BEARMAN               │ 18       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 12    │ Franco COLAPINTO             │ 16       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 13    │ Arvid LINDBLAD               │ 13       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 14    │ Carlos SAINZ                 │ 6        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 15    │ Alexander ALBON              │ 5        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 16    │ Esteban OCON                 │ 3        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 17    │ Gabriel BORTOLETO            │ 2        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 18    │ Fernando ALONSO              │ 1        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 19    │ Nico HULKENBERG              │ 0        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 20    │ Valtteri BOTTAS              │ 0        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 21    │ Sergio PEREZ                 │ 0        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 22    │ Lance STROLL                 │ 0        │ --     │
+└───────┴──────────────────────────────┴──────────┴────────┘
 
-  Top 10:
-
-┌──────┬──────────────────────┬────────────────────┬───────┬────────────┬──────────────┬───────┐
-│ Pos  │ Driver               │ Team               │ Laps  │ Time       │ Gap          │ Pts   │
-├──────┼──────────────────────┼────────────────────┼───────┼────────────┼──────────────┼───────┤
-│ 1    │ Lando Norris         │ McLaren            │ 70    │ 1:35       │ LEADER       │ 25    │
-│ 2    │ Max Verstappen       │ Red Bull Racing    │ 70    │ 1:35       │ +4.5s        │ 18    │
-│ 3    │ Charles Leclerc      │ Ferrari            │ 70    │ 1:35       │ +8.2s        │ 15    │
-│ 4    │ Oscar Piastri        │ McLaren            │ 70    │ 1:35       │ +12.1s       │ 12    │
-│ 5    │ George Russell       │ Mercedes           │ 70    │ 1:35       │ +15.3s       │ 10    │
-│ 6    │ Lewis Hamilton       │ Ferrari            │ 70    │ 1:35       │ +18.7s       │ 8     │
-│ 7    │ Pierre Gasly         │ Alpine             │ 70    │ 1:35       │ +22.4s       │ 6     │
-│ 8    │ Carlos Sainz         │ Williams           │ 70    │ 1:35       │ +26.1s       │ 4     │
-│ 9    │ Fernando Alonso      │ Aston Martin       │ 70    │ 1:35       │ +30.5s       │ 2     │
-│ 10   │ Alex Albon           │ Williams           │ 70    │ 1:35       │ +35.2s       │ 1     │
-└──────┴──────────────────────┴────────────────────┴───────┴────────────┴──────────────┴───────┘
+  Constructors Championship
+  ──── Constructors Championship
+┌───────┬──────────────────────────────┬──────────┬────────┐
+│ Pos   │ Name                         │ Points   │ Chg    │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥇 1  │ Mercedes                     │ 262      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥈 2  │ Ferrari                      │ 190      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 🥉 3  │ McLaren                      │ 141      │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 4     │ Red Bull Racing              │ 89       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 5     │ Alpine                       │ 57       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 6     │ Racing Bulls                 │ 41       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 7     │ Haas F1 Team                 │ 21       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 8     │ Williams                     │ 11       │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 9     │ Audi                         │ 2        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 10    │ Aston Martin                 │ 1        │ --     │
+├───────┼──────────────────────────────┼──────────┼────────┤
+│ 11    │ Cadillac                     │ 0        │ --     │
+└───────┴──────────────────────────────┴──────────┴────────┘
 ```
 
 ## Commands
@@ -95,6 +145,7 @@ $ f1 last
 ```
 f1 schedule
   Show the next 5 upcoming races with session times in your local timezone.
+  Rounds are labeled with their real season number (e.g., round 10 of 24).
 
 f1 results [year] [round]
   Show race results for a given year and round. Defaults to the most recent
@@ -102,7 +153,8 @@ f1 results [year] [round]
 
 f1 standings [year]
   Show current driver and constructor championship standings. Defaults to the
-  current season. Position change (+X/-X) shows movement since the previous race.
+  current season. Position change (+X/-X) shows movement since the previous
+  race. Top 3 drivers and teams are marked with 🥇🥈🥉 podium medals.
 
 f1 last
   Quick summary of the most recent completed race -- winner, top 3, and full
@@ -112,6 +164,18 @@ f1 today
   What's happening this race weekend. Shows upcoming sessions if a race weekend
   is in progress, or the next upcoming race if there's a gap.
 ```
+
+## Visual features
+
+All tabular output includes:
+
+- **Header bars** — each table has a colored `────` bar above the title (F1 red), making sections easy to spot at a glance.
+- **Podium medals** — 🥇🥈🥉 appear next to the top 3 positions in standings, results, and last race output.
+- **Session type colors** — Race (green), Qualifying (yellow), Practice (blue), Sprint (orange) — each session type has its own color in schedule and today tables.
+- **Session emoji** — each session row has an emoji icon: 🏁 (Race), ⏱ (Qualifying), 📝 (Practice), ⚡ (Sprint).
+- **Alternating row dimming** — even-numbered rows are slightly dimmed so you can track lines across wide tables.
+- **Upcoming header** — the schedule table has a `──── Upcoming` header that turns red when there are races to show.
+- **Local timezone** — all session times are converted to your local time automatically. No more adding/subtracting UTC offsets.
 
 ## Examples
 
@@ -139,12 +203,10 @@ f1 today
 
 The Ergast API -- the de facto free F1 data API for over a decade -- shut down at the end of 2024. Existing F1 CLI tools either relied on Ergast (now broken) or require paid API keys. This project replaces them with a tool that uses the new OpenF1 API, which provides free access to historical data (2023 onwards) with no sign-up required.
 
-This is also my first npm package -- built to learn the publish workflow end-to-end.
-
 Things this does differently:
 
-- **Local timezone display.** Session times are converted to your local timezone automatically.
-- **Table formatting.** Colored output with proper alignment, no JSON dumps.
+- **Local timezone display.** Session times are converted to your local timezone automatically. No more manual UTC offset math.
+- **Table formatting.** Colored output with proper alignment, emoji, and podium medals -- not raw JSON.
 - **Caching.** API responses are cached for 30-60 seconds so repeated calls don't hammer the API.
 - **Rate limiting.** Built-in rate limiting keeps us polite to the free API.
 

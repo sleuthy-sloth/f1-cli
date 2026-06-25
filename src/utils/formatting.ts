@@ -36,9 +36,6 @@ export function formatSessionTime(dateStart: string, gmtOffset: string): string 
 
   const localTime = new Date(d.getTime() + totalOffsetMs + d.getTimezoneOffset() * 60000);
 
-  const tzSign = offsetHours >= 0 ? '+' : '';
-  const tzLabel = `${tzSign}${String(Math.abs(offsetHours)).padStart(2, '0')}:${String(offsetMinutes).padStart(2, '0')}`;
-
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -49,7 +46,7 @@ export function formatSessionTime(dateStart: string, gmtOffset: string): string 
   const hours = String(localTime.getHours()).padStart(2, '0');
   const mins = String(localTime.getMinutes()).padStart(2, '0');
 
-  return `${day}, ${date} ${month} ${year}, ${hours}:${mins} UTC${tzLabel}`;
+  return `${day}, ${date} ${month} ${year}, ${hours}:${mins}`;
 }
 
 /**
@@ -222,7 +219,7 @@ export function createScheduleTable(
   const table = new Table({
     head: ['#', 'Grand Prix', 'Location', 'Circuit', 'Qualifying', 'Race'],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [5, 28, 18, 18, 22, 22],
+    colWidths: [5, 28, 18, 18, 24, 24],
   });
 
   for (let i = 0; i < races.length; i++) {

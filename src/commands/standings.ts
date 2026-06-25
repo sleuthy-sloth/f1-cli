@@ -7,17 +7,21 @@ export async function standingsCommand(year?: number): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
-  // Get the latest race session for the year to get latest standings
-  const meetings = await api.getMeetings({ year: targetYear });
+  // Fetch all meetings and all sessions for the year in one call each
+  const [meetings, allSessions] = await Promise.all([
+    api.getMeetings({ year: targetYear }),
+    api.getSessions({ year: targetYear }),
+  ]);
+
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 
   let latestSessionKey: number | 'latest' = 'latest';
   let latestMeetingKey: number | 'latest' = 'latest';
 
-  // Try to find the latest completed race for meaningful standings
+  // Find the latest completed race session client-side (no N+1 loop)
   for (let i = raceMeetings.length - 1; i >= 0; i--) {
     const m = raceMeetings[i];
-    const sessions = await api.getSessions({ meeting_key: m.meeting_key });
+    const sessions = allSessions.filter((s) => s.meeting_key === m.meeting_key);
     const raceSession = sessions.find(
       (s) => s.session_type === 'Race' && new Date(s.date_end) < now
     );

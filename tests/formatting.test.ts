@@ -131,8 +131,8 @@ describe('formatting utils', () => {
           name: 'Australian Grand Prix',
           location: 'Melbourne',
           circuit: 'Melbourne',
-          qualifyingDate: 'Sat, 15 Mar 2025, 16:00 UTC+11',
-          raceDate: 'Sun, 16 Mar 2025, 15:00 UTC+11',
+          qualifyingDate: 'Sat, 15 Mar 2025, 16:00',
+          raceDate: 'Sun, 16 Mar 2025, 15:00',
         },
       ];
 
