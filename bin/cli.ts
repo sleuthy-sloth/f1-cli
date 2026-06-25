@@ -6,17 +6,14 @@ import { resultsCommand } from '../src/commands/results.js';
 import { standingsCommand } from '../src/commands/standings.js';
 import { lastCommand } from '../src/commands/last.js';
 import { todayCommand } from '../src/commands/today.js';
-import { readFileSync } from 'node:fs';
-const { version } = JSON.parse(
-  readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
-);
+import { VERSION } from '../src/version.js';
 
 const program = new Command();
 
 program
   .name('f1')
   .description('Formula 1 data in your terminal')
-  .version(version);
+  .version(VERSION);
 
 program
   .command('schedule')
