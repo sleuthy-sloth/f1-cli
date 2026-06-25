@@ -4,6 +4,7 @@ import {
   formatDuration,
   formatGap,
 } from '../utils/formatting.js';
+import { printTrailingBlank } from '../utils/display.js';
 import chalk from 'chalk';
 
 export async function lastCommand(): Promise<void> {
@@ -97,4 +98,5 @@ export async function lastCommand(): Promise<void> {
 
   console.log(chalk.dim('\n  Top 10:\n'));
   console.log(createResultsTable(tableResults));
+  printTrailingBlank();
 }

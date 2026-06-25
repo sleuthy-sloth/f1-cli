@@ -4,6 +4,7 @@ import {
   formatDuration,
   formatGap,
 } from '../utils/formatting.js';
+import { printTrailingBlank } from '../utils/display.js';
 import chalk from 'chalk';
 
 export async function resultsCommand(year?: number, round?: number): Promise<void> {
@@ -80,4 +81,5 @@ export async function resultsCommand(year?: number, round?: number): Promise<voi
 
   console.log(chalk.bold.cyan(`\n  ${targetMeeting.meeting_official_name}\n`));
   console.log(createResultsTable(tableResults));
+  printTrailingBlank();
 }

@@ -56,17 +56,17 @@ describe('formatting utils', () => {
   });
 
   describe('colorPosition', () => {
-    it('returns colored string for P1', () => {
+    it('returns medal emoji for P1', () => {
       const result = colorPosition(1);
       expect(result).toContain('1');
     });
 
-    it('returns colored string for P2', () => {
+    it('returns medal emoji for P2', () => {
       const result = colorPosition(2);
       expect(result).toContain('2');
     });
 
-    it('returns colored string for P3', () => {
+    it('returns medal emoji for P3', () => {
       const result = colorPosition(3);
       expect(result).toContain('3');
     });
@@ -104,6 +104,7 @@ describe('formatting utils', () => {
       expect(table).toContain('George RUSSELL');
       expect(table).toContain('Ferrari');
       expect(table).toContain('Mercedes');
+      expect(table).toContain('Results');
       expect(table).toContain('Pos'); // header
     });
   });
@@ -138,6 +139,7 @@ describe('formatting utils', () => {
       const table = createScheduleTable(races);
       expect(table).toContain('Australian Grand Prix');
       expect(table).toContain('Melbourne');
+      expect(table).toContain('Upcoming');
     });
   });
 });

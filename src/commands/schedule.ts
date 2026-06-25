@@ -1,5 +1,6 @@
 import { api } from '../api/client.js';
 import { createScheduleTable, formatSessionTime } from '../utils/formatting.js';
+import { printTrailingBlank } from '../utils/display.js';
 import chalk from 'chalk';
 
 export async function scheduleCommand(): Promise<void> {
@@ -20,6 +21,8 @@ export async function scheduleCommand(): Promise<void> {
   let displayMeetings = upcoming.slice(0, 5);
 
   // For each meeting, find the Qualifying and Race sessions
+  // Note: the OpenF1 API doesn't provide a native round number per meeting,
+  // so round is derived from the meeting's position in the year's list.
   const races: Array<{
     round: number;
     name: string;
@@ -48,10 +51,10 @@ export async function scheduleCommand(): Promise<void> {
     };
   });
 
-  console.log(chalk.bold.cyan('\n  Upcoming F1 Races\n'));
   if (races.length === 0) {
-    console.log('  No upcoming races found for the current season.');
+    console.log(chalk.dim('  No upcoming races found for the current season.\n'));
     return;
   }
   console.log(createScheduleTable(races));
+  printTrailingBlank();
 }

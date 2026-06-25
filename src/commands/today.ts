@@ -1,7 +1,6 @@
 import { api } from '../api/client.js';
-import { formatSessionTime } from '../utils/formatting.js';
+import { formatSessionTime, createSessionTable } from '../utils/formatting.js';
 import chalk from 'chalk';
-import Table from 'cli-table3';
 
 export async function todayCommand(): Promise<void> {
   const now = new Date();
@@ -47,19 +46,14 @@ export async function todayCommand(): Promise<void> {
     // Show all sessions for the next weekend
     const sessions = await api.getSessions({ meeting_key: next.meeting_key });
 
-    const table = new Table({
-      head: ['Session', 'Date', 'Local Time'],
-      style: { head: ['cyan'], border: ['gray'] },
-      colWidths: [20, 30, 16],
-    });
+    const sessionRows = sessions.map((s) => ({
+      name: s.session_name || s.session_type,
+      dateTime: formatSessionTime(s.date_start, s.gmt_offset),
+      sessionType: s.session_type,
+    }));
 
-    for (const s of sessions) {
-      const formatted = formatSessionTime(s.date_start, s.gmt_offset);
-      const [datePart, timePart] = formatted.split(', ');
-      table.push([s.session_name || s.session_type, datePart + ', ' + timePart, '']);
-    }
-
-    console.log(table.toString() + '\n');
+    console.log(createSessionTable(sessionRows));
+    console.log();
     return;
   }
 
@@ -82,29 +76,27 @@ export async function todayCommand(): Promise<void> {
       const raceEnd = new Date(raceSession.date_end);
       if (now > raceEnd) {
         console.log(chalk.green('\n  Race completed!'));
-        console.log(`  Visit "f1 last" or "f1 results" for full results.\n`);
+        console.log('  Visit "f1 last" or "f1 results" for full results.\n');
         return;
       }
     }
-    console.log(chalk.yellow('\n  All of today\'s sessions have ended.\n'));
+    console.log(chalk.yellow("\n  All of today's sessions have ended.\n"));
     return;
   }
 
   console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} — ${weekend.location}\n`));
 
-  const table = new Table({
-    head: ['Session', 'Date', 'Local Time'],
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [20, 30, 16],
-  });
-
-  for (const s of upcomingSessions) {
+  const sessionRows = upcomingSessions.map((s) => {
     const formatted = formatSessionTime(s.date_start, s.gmt_offset);
     const isNow = new Date(s.date_start) <= now && new Date(s.date_end) > now;
     const name = isNow ? chalk.green(`${s.session_name} < LIVE`) : s.session_name;
-    const [datePart, timePart] = formatted.split(', ');
-    table.push([name, datePart + ', ' + timePart, '']);
-  }
+    return {
+      name,
+      dateTime: formatted,
+      sessionType: s.session_type,
+    };
+  });
 
-  console.log(table.toString() + '\n');
+  console.log(createSessionTable(sessionRows));
+  console.log();
 }

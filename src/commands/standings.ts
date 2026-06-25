@@ -1,5 +1,6 @@
 import { api } from '../api/client.js';
 import { createStandingsTable } from '../utils/formatting.js';
+import { printTrailingBlank } from '../utils/display.js';
 import chalk from 'chalk';
 
 export async function standingsCommand(year?: number): Promise<void> {
@@ -84,4 +85,5 @@ export async function standingsCommand(year?: number): Promise<void> {
   console.log(chalk.bold(`\n  ${targetYear} Formula 1 Championship Standings\n`));
   console.log(createStandingsTable(driverEntries, 'Drivers Championship'));
   console.log(createStandingsTable(teamEntries, 'Constructors Championship'));
+  printTrailingBlank();
 }
