@@ -21,78 +21,125 @@ npx f1-cli schedule
 ### Homebrew
 
 ```bash
-brew tap sleuthy-sloth/tap
+brew tap sleuthy-sloth/homebrew-tap
 brew install f1-cli
+```
+
+### From source
+
+```bash
+git clone https://github.com/sleuthy-sloth/f1-cli.git
+cd f1-cli
+npm install
+npm run build
+npm link
+```
+
+## Quick start
+
+```
+$ f1 schedule
+
+  Upcoming F1 Races
+
+┌─────┬──────────────────────────────┬──────────────────┬──────────────────┬──────────────────────┬──────────────────────┐
+│ #   │ Grand Prix                    │ Location         │ Circuit          │ Qualifying           │ Race                 │
+├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
+│ 1   │ British Grand Prix            │ Silverstone      │ Silverstone      │ Sat, 5 Jul 2025      │ Sun, 6 Jul 2025      │
+│     │                              │                  │                  │ 15:00 UTC+1          │ 15:00 UTC+1          │
+├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
+│ 2   │ Hungarian Grand Prix          │ Budapest         │ Hungaroring      │ Sat, 19 Jul 2025     │ Sun, 20 Jul 2025     │
+│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
+├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
+│ 3   │ Belgian Grand Prix            │ Spa              │ Spa-Francorchamps│ Sat, 26 Jul 2025     │ Sun, 27 Jul 2025     │
+│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
+├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
+│ 4   │ Dutch Grand Prix              │ Zandvoort        │ Zandvoort        │ Sat, 2 Aug 2025      │ Sun, 3 Aug 2025      │
+│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
+├─────┼──────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
+│ 5   │ Italian Grand Prix            │ Monza            │ Monza            │ Sat, 6 Sep 2025      │ Sun, 7 Sep 2025      │
+│     │                              │                  │                  │ 15:00 UTC+2          │ 15:00 UTC+2          │
+└─────┴──────────────────────────────┴──────────────────┴──────────────────┴──────────────────────┴──────────────────────┘
+```
+
+```
+$ f1 last
+
+  Last Race: FORMULA 1 AWS GRAND PRIX DU CANADA 2025
+
+  Winner: Lando Norris (McLaren)
+  Time:   1:35
+  2nd:    Max Verstappen (Red Bull Racing)
+  3rd:    Charles Leclerc (Ferrari)
+
+  Top 10:
+
+┌──────┬──────────────────────┬────────────────────┬───────┬────────────┬──────────────┬───────┐
+│ Pos  │ Driver               │ Team               │ Laps  │ Time       │ Gap          │ Pts   │
+├──────┼──────────────────────┼────────────────────┼───────┼────────────┼──────────────┼───────┤
+│ 1    │ Lando Norris         │ McLaren            │ 70    │ 1:35       │ LEADER       │ 25    │
+│ 2    │ Max Verstappen       │ Red Bull Racing    │ 70    │ 1:35       │ +4.5s        │ 18    │
+│ 3    │ Charles Leclerc      │ Ferrari            │ 70    │ 1:35       │ +8.2s        │ 15    │
+│ 4    │ Oscar Piastri        │ McLaren            │ 70    │ 1:35       │ +12.1s       │ 12    │
+│ 5    │ George Russell       │ Mercedes           │ 70    │ 1:35       │ +15.3s       │ 10    │
+│ 6    │ Lewis Hamilton       │ Ferrari            │ 70    │ 1:35       │ +18.7s       │ 8     │
+│ 7    │ Pierre Gasly         │ Alpine             │ 70    │ 1:35       │ +22.4s       │ 6     │
+│ 8    │ Carlos Sainz         │ Williams           │ 70    │ 1:35       │ +26.1s       │ 4     │
+│ 9    │ Fernando Alonso      │ Aston Martin       │ 70    │ 1:35       │ +30.5s       │ 2     │
+│ 10   │ Alex Albon           │ Williams           │ 70    │ 1:35       │ +35.2s       │ 1     │
+└──────┴──────────────────────┴────────────────────┴───────┴────────────┴──────────────┴───────┘
 ```
 
 ## Commands
 
 ```
-f1 schedule          Show the next 5 upcoming races with session times
-f1 results [y] [r]   Race results for a year/round (default: most recent)
-f1 standings [year]  Driver + constructor championship standings
-f1 last              Quick summary of the most recent completed race
-f1 today             What's happening this race weekend
+f1 schedule
+  Show the next 5 upcoming races with session times in your local timezone.
+
+f1 results [year] [round]
+  Show race results for a given year and round. Defaults to the most recent
+  completed race.
+
+f1 standings [year]
+  Show current driver and constructor championship standings. Defaults to the
+  current season. Position change (+X/-X) shows movement since the previous race.
+
+f1 last
+  Quick summary of the most recent completed race -- winner, top 3, and full
+  top-10 results table.
+
+f1 today
+  What's happening this race weekend. Shows upcoming sessions if a race weekend
+  is in progress, or the next upcoming race if there's a gap.
 ```
 
 ## Examples
 
-Show the upcoming race calendar:
-
 ```bash
-$ f1 schedule
+# See the next 5 races
+f1 schedule
 
-Upcoming F1 Races
+# Get the most recent race results
+f1 results
 
-┌───┬────────────────────────────┬──────────────────┬──────────────────┬──────────────────────┬──────────────────────┐
-│ # │ Grand Prix                 │ Location         │ Circuit          │ Qualifying           │ Race                 │
-├───┼────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 1 │ Austrian Grand Prix        │ Spielberg        │ Spielberg        │ Sat, 28 Jun, 13:00   │ Sun, 29 Jun, 13:00   │
-├───┼────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 2 │ British Grand Prix         │ Silverstone      │ Silverstone      │ Sat, 5 Jul, 16:00    │ Sun, 6 Jul, 15:00    │
-├───┼────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 3 │ Belgian Grand Prix         │ Spa              │ Spa-Francorchamps│ Sat, 19 Jul, 13:00   │ Sun, 20 Jul, 13:00   │
-├───┼────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 4 │ Hungarian Grand Prix       │ Budapest         │ Hungaroring      │ Sat, 26 Jul, 13:00   │ Sun, 27 Jul, 13:00   │
-├───┼────────────────────────────┼──────────────────┼──────────────────┼──────────────────────┼──────────────────────┤
-│ 5 │ Dutch Grand Prix           │ Zandvoort        │ Zandvoort        │ Sat, 23 Aug, 13:00   │ Sun, 24 Aug, 13:00   │
-└───┴────────────────────────────┴──────────────────┴──────────────────┴──────────────────────┴──────────────────────┘
-```
+# Get results for a specific round
+f1 results 2025 3
 
-Check current championship standings:
+# Check championship standings
+f1 standings
 
-```bash
-$ f1 standings
+# Quick look at the last race
+f1 last
 
-2026 Formula 1 Championship Standings
-
-Drivers Championship
-┌─────┬──────────────────────────────┬──────────┬────────┐
-│ Pos │ Name                         │ Points   │ Chg    │
-├─────┼──────────────────────────────┼──────────┼────────┤
-│ 1   │ Kimi ANTONELLI               │ 156      │ --     │
-│ 2   │ Lewis HAMILTON               │ 115      │ --     │
-│ 3   │ George RUSSELL               │ 106      │ --     │
-│ 4   │ Charles LECLERC              │ 75       │ --     │
-│ 5   │ Lando NORRIS                 │ 73       │ +1     │
-│ ... │ (22 drivers total)           │          │        │
-└─────┴──────────────────────────────┴──────────┴────────┘
-
-Constructors Championship
-┌─────┬──────────────────────────────┬──────────┬────────┐
-│ Pos │ Name                         │ Points   │ Chg    │
-├─────┼──────────────────────────────┼──────────┼────────┤
-│ 1   │ Mercedes                     │ 262      │ --     │
-│ 2   │ Ferrari                      │ 190      │ --     │
-│ 3   │ McLaren                      │ 141      │ --     │
-│ 4   │ Red Bull Racing              │ 89       │ --     │
-│ ... │ (11 teams total)             │          │        │
-└─────┴──────────────────────────────┴──────────┴────────┘
+# What's on this weekend
+f1 today
 ```
 
 ## Why
 
-Existing F1 CLI tools are either abandoned or require paid API keys. The old Ergast API shut down in 2024, and most tools that relied on it stopped working. This tool uses the free OpenF1 API (historical data from 2023+) with no sign-up required.
+The Ergast API -- the de facto free F1 data API for over a decade -- shut down at the end of 2024. Existing F1 CLI tools either relied on Ergast (now broken) or require paid API keys. This project replaces them with a tool that uses the new OpenF1 API, which provides free access to historical data (2023 onwards) with no sign-up required.
+
+This is also my first npm package -- built to learn the publish workflow end-to-end.
 
 Things this does differently:
 
@@ -104,8 +151,6 @@ Things this does differently:
 ## API
 
 This tool uses the [OpenF1 API](https://openf1.org/) for all data. Historical data (2023+) is free and requires no authentication. Real-time data requires a paid subscription.
-
-This is also Steven's first npm package -- built to learn the publish workflow end-to-end.
 
 ## Development
 
