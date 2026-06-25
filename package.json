@@ -1,0 +1,57 @@
+{
+  "name": "f1-cli",
+  "version": "0.1.0",
+  "description": "Formula 1 data in your terminal - schedule, results, standings, and session times",
+  "type": "module",
+  "main": "./dist/bin/cli.js",
+  "bin": {
+    "f1": "./dist/bin/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build && npm test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "tsx bin/cli.ts",
+    "start": "node dist/bin/cli.js"
+  },
+  "keywords": [
+    "f1",
+    "formula1",
+    "cli",
+    "formula-one",
+    "motorsport",
+    "racing",
+    "openf1"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Steven Koehl",
+    "url": "https://github.com/sleuthy-sloth"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sleuthy-sloth/f1-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sleuthy-sloth/f1-cli/issues"
+  },
+  "homepage": "https://github.com/sleuthy-sloth/f1-cli#readme",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
