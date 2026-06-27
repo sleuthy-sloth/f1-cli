@@ -63,6 +63,7 @@ export async function standingsCommand(year?: number, jsonMode = false): Promise
   const driverEntries = sortedDrivers.map((d) => {
     const driver = driverMap.get(d.driver_number);
     const name = driver?.full_name ?? `Driver #${d.driver_number}`;
+    const teamColor = driver?.team_colour;
     const posChange = d.position_current - d.position_start;
     const changeStr =
       posChange === 0 ? '--' : posChange < 0 ? chalk.green(`+${Math.abs(posChange)}`) : chalk.red(`-${posChange}`);
@@ -71,6 +72,7 @@ export async function standingsCommand(year?: number, jsonMode = false): Promise
       name,
       points: d.points_current,
       change: changeStr,
+      teamColor,
     };
   });
 

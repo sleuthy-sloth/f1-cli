@@ -85,3 +85,18 @@ export interface ChampionshipTeam {
   points_start: number;
   points_current: number;
 }
+
+export interface Lap {
+  session_key: number;
+  driver_number: number;
+  lap_number: number;
+  lap_duration: number;
+  duration_sector_1: number;
+  duration_sector_2: number;
+  duration_sector_3: number;
+  is_pit_out_lap: boolean;
+  i1_speed_trap: number;
+  i2_speed_trap: number;
+  st_speed_trap: number;
+  date_start: string;
+}

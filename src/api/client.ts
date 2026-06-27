@@ -148,6 +148,16 @@ export const api = {
     const url = `${BASE_URL}/championship_teams${qs}`;
     return fetchJson<import('./types.js').ChampionshipTeam[]>(url, url, 30_000);
   },
+
+  getLaps(params: { session_key?: number; meeting_key?: number | 'latest'; driver_number?: number } = {}) {
+    const qs = buildQuery({
+      session_key: params.session_key,
+      meeting_key: params.meeting_key,
+      driver_number: params.driver_number,
+    });
+    const url = `${BASE_URL}/laps${qs}`;
+    return fetchJson<import('./types.js').Lap[]>(url, url, 30_000);
+  },
 };
 
 // Clear cache (useful in testing)

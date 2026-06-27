@@ -1,5 +1,11 @@
 import { api } from '../api/client.js';
-import { formatSessionTime, createSessionTable } from '../utils/formatting.js';
+import {
+  formatSessionTime,
+  createSessionTable,
+  formatCountdown,
+  liveIndicator,
+  makeBar,
+} from '../utils/formatting.js';
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
@@ -65,11 +71,16 @@ export async function todayCommand(jsonMode = false): Promise<void> {
       api.getSessions({ meeting_key: next.meeting_key })
     );
 
-    const sessionRows = sessions.map((s) => ({
-      name: s.session_name || s.session_type,
-      dateTime: formatSessionTime(s.date_start, s.gmt_offset),
-      sessionType: s.session_type,
-    }));
+    const sessionRows = sessions.map((s) => {
+      const countdown = formatCountdown(new Date(s.date_start), now);
+      const isNow = new Date(s.date_start) <= now && new Date(s.date_end) > now;
+      const label = isNow ? `${s.session_name} ${liveIndicator()}` : `${s.session_name} ${chalk.dim(countdown)}`;
+      return {
+        name: label,
+        dateTime: formatSessionTime(s.date_start, s.gmt_offset),
+        sessionType: s.session_type,
+      };
+    });
 
     if (jsonMode) {
       console.log(JSON.stringify({
@@ -153,10 +164,41 @@ export async function todayCommand(jsonMode = false): Promise<void> {
 
   console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} -- ${weekend.location}\n`));
 
+  // Check for a live race session to show lap progress
+  let lapProgressBar = '';
+  const liveRaceSession = upcomingSessions.find(
+    (s) => s.session_type === 'Race' && new Date(s.date_start) <= now && new Date(s.date_end) > now
+  );
+  if (liveRaceSession) {
+    try {
+      const laps = await api.getLaps({ session_key: liveRaceSession.session_key });
+      if (laps.length > 0) {
+        // Find the highest lap number across all drivers
+        const maxLap = Math.max(...laps.map((l) => l.lap_number));
+        // Estimate total laps -- common F1 race distances range 50-78 laps.
+        // We cannot get the planned total from the API, so show current lap count.
+        const barW = 20;
+        const bar = makeBar(maxLap, maxLap + 5, barW); // slight headroom for bar fill
+        lapProgressBar = `\n  ${chalk.bold('Lap Progress:')} Lap ${maxLap}  ${bar}\n`;
+      }
+    } catch {
+      // Lap data may not be available yet; silently skip
+    }
+  }
+
   const sessionRows = upcomingSessions.map((s) => {
     const formatted = formatSessionTime(s.date_start, s.gmt_offset);
     const isNow = new Date(s.date_start) <= now && new Date(s.date_end) > now;
-    const name = isNow ? chalk.green(`${s.session_name} < LIVE`) : s.session_name;
+    if (isNow) {
+      const name = `${s.session_name} ${liveIndicator()}`;
+      return {
+        name,
+        dateTime: formatted,
+        sessionType: s.session_type,
+      };
+    }
+    const countdown = formatCountdown(new Date(s.date_start), now);
+    const name = `${s.session_name} ${chalk.dim(countdown)}`;
     return {
       name,
       dateTime: formatted,
@@ -164,6 +206,9 @@ export async function todayCommand(jsonMode = false): Promise<void> {
     };
   });
 
+  if (lapProgressBar) {
+    console.log(lapProgressBar);
+  }
   console.log(createSessionTable(sessionRows));
   console.log();
 }

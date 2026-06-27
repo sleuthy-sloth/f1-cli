@@ -10,6 +10,12 @@ import {
   createStandingsTable,
   createScheduleTable,
   createDriverTable,
+  countryCodeToFlag,
+  makeBar,
+  formatCountdown,
+  colorGap,
+  createPodiumGraphic,
+  liveIndicator,
 } from '../src/utils/formatting.js';
 
 describe('formatting utils', () => {
@@ -219,6 +225,193 @@ describe('formatting utils', () => {
       const table = createDriverTable(driver);
       expect(table).toContain('Rookie DRIVER');
       expect(table).toContain('-');
+    });
+  });
+
+  describe('countryCodeToFlag', () => {
+    it('converts IOC codes to flag emoji', () => {
+      const gbr = countryCodeToFlag('GBR');
+      expect(gbr).toBe('\u{1F1EC}\u{1F1E7}'); // GB flag
+    });
+
+    it('converts NED to Dutch flag', () => {
+      const ned = countryCodeToFlag('NED');
+      expect(ned).toBe('\u{1F1F3}\u{1F1F1}'); // NL flag
+    });
+
+    it('handles 2-letter ISO codes directly', () => {
+      const us = countryCodeToFlag('US');
+      expect(us).toBe('\u{1F1FA}\u{1F1F8}'); // US flag
+    });
+
+    it('returns empty string for unknown codes', () => {
+      expect(countryCodeToFlag('XYZ')).toBe('');
+    });
+
+    it('returns empty string for empty input', () => {
+      expect(countryCodeToFlag('')).toBe('');
+    });
+
+    it('is case-insensitive', () => {
+      expect(countryCodeToFlag('gbr')).toBe(countryCodeToFlag('GBR'));
+    });
+  });
+
+  describe('makeBar', () => {
+    it('creates a full bar when points equals maxPoints', () => {
+      const bar = makeBar(100, 100, 10);
+      // Should contain block chars and no light shade chars in the raw string
+      // (chalk wraps in escape codes, so we check for the block character)
+      expect(bar).toContain('\u2588');
+    });
+
+    it('creates a partial bar', () => {
+      const bar = makeBar(50, 100, 10);
+      expect(bar).toContain('\u2588');
+      expect(bar).toContain('\u2591');
+    });
+
+    it('creates an empty bar for zero points', () => {
+      const bar = makeBar(0, 100, 10);
+      expect(bar).toContain('\u2591');
+      expect(bar).not.toContain('\u2588');
+    });
+
+    it('returns empty string for zero maxWidth', () => {
+      expect(makeBar(50, 100, 0)).toBe('');
+    });
+
+    it('clamps ratio to 1 when points exceed maxPoints', () => {
+      const bar = makeBar(200, 100, 10);
+      // Should be fully filled, no empty chars
+      expect(bar).toContain('\u2588');
+      expect(bar).not.toContain('\u2591');
+    });
+  });
+
+  describe('formatCountdown', () => {
+    const now = new Date('2025-06-27T12:00:00Z');
+
+    it('returns "Started" for a past date', () => {
+      const past = new Date('2025-06-27T11:00:00Z');
+      expect(formatCountdown(past, now)).toBe('Started');
+    });
+
+    it('returns minutes format under 1 hour', () => {
+      const future = new Date('2025-06-27T12:30:00Z');
+      expect(formatCountdown(future, now)).toBe('Starts in 30m');
+    });
+
+    it('returns hours+minutes format under 1 day', () => {
+      const future = new Date('2025-06-27T14:30:00Z');
+      expect(formatCountdown(future, now)).toBe('Starts in 2h 30m');
+    });
+
+    it('returns days+hours format over 1 day', () => {
+      const future = new Date('2025-06-29T14:00:00Z');
+      // 2 days + 2 hours
+      expect(formatCountdown(future, now)).toBe('Starts in 2d 2h');
+    });
+
+    it('returns "Started" when target equals now', () => {
+      expect(formatCountdown(now, now)).toBe('Started');
+    });
+  });
+
+  describe('colorGap', () => {
+    it('colors LEADER in gold', () => {
+      const result = colorGap('LEADER');
+      expect(result).toContain('LEADER');
+      // chalk applies color; in TTY mode the string will contain escape codes.
+      // In non-TTY mode chalk strips colors, so we just verify the text.
+    });
+
+    it('colors gap under 5 seconds green', () => {
+      const result = colorGap('+3.2s', 3.2);
+      expect(result).toContain('+3.2s');
+    });
+
+    it('colors gap 5-30 seconds yellow', () => {
+      const result = colorGap('+15.0s', 15.0);
+      expect(result).toContain('+15.0s');
+    });
+
+    it('colors gap over 30 seconds red', () => {
+      const result = colorGap('+45.0s', 45.0);
+      expect(result).toContain('+45.0s');
+    });
+
+    it('colors string gaps (lapped) red', () => {
+      const result = colorGap('+1 LAP');
+      expect(result).toContain('+1 LAP');
+    });
+
+    it('colors red when gapValue is undefined', () => {
+      const result = colorGap('+5.0s');
+      expect(result).toContain('+5.0s');
+    });
+
+    it('handles NaN gapValue as red', () => {
+      const result = colorGap('+5.0s', NaN);
+      expect(result).toContain('+5.0s');
+    });
+  });
+
+  describe('createPodiumGraphic', () => {
+    it('renders a podium with all three positions', () => {
+      const graphic = createPodiumGraphic([
+        { position: 1, driver: 'Norris', teamColor: 'F47600' },
+        { position: 2, driver: 'Leclerc', teamColor: 'DC0000' },
+        { position: 3, driver: 'Russell', teamColor: '00D2BE' },
+      ]);
+      expect(graphic).toContain('NORRIS');
+      expect(graphic).toContain('LECLERC');
+      expect(graphic).toContain('RUSSELL');
+      expect(graphic).toContain('1st');
+      expect(graphic).toContain('2nd');
+      expect(graphic).toContain('3rd');
+      // Should contain box-drawing characters
+      expect(graphic).toContain('+');
+      expect(graphic).toContain('-');
+      expect(graphic).toContain('|');
+    });
+
+    it('returns empty string when a position is missing', () => {
+      const graphic = createPodiumGraphic([
+        { position: 1, driver: 'Norris' },
+        { position: 2, driver: 'Leclerc' },
+      ]);
+      expect(graphic).toBe('');
+    });
+
+    it('truncates long names to 10 characters', () => {
+      const graphic = createPodiumGraphic([
+        { position: 1, driver: 'VeryLongLastName', teamColor: 'F47600' },
+        { position: 2, driver: 'Leclerc', teamColor: 'DC0000' },
+        { position: 3, driver: 'Russell', teamColor: '00D2BE' },
+      ]);
+      expect(graphic).toContain('VERYLONGLA');
+      // Should not contain the full untruncated name
+      expect(graphic).not.toContain('VERYLONGLASTNAME');
+    });
+
+    it('works without team colors', () => {
+      const graphic = createPodiumGraphic([
+        { position: 1, driver: 'Norris' },
+        { position: 2, driver: 'Leclerc' },
+        { position: 3, driver: 'Russell' },
+      ]);
+      expect(graphic).toContain('NORRIS');
+    });
+  });
+
+  describe('liveIndicator', () => {
+    it('returns a LIVE string with ANSI blink codes', () => {
+      const indicator = liveIndicator();
+      expect(indicator).toContain('LIVE');
+      expect(indicator).toContain('\x1b[5m'); // blink
+      expect(indicator).toContain('\x1b[31m'); // red
+      expect(indicator).toContain('\x1b[0m'); // reset
     });
   });
 });

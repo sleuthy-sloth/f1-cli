@@ -109,6 +109,7 @@ export async function driverCommand(name?: string, jsonMode = false): Promise<vo
     name: driver.full_name,
     number: driver.driver_number,
     team: driver.team_name,
+    teamColor: driver.team_colour,
     countryCode: driver.country_code,
     headshotUrl: driver.headshot_url,
     seasonPoints: champ?.points_current ?? 0,

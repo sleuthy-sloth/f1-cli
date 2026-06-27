@@ -7,6 +7,16 @@ const GOLD = '#ffd700';
 const SILVER = '#a8a8a8';
 const BRONZE = '#cd7f32';
 
+/**
+ * Apply a team color to a driver name using chalk.hex().
+ * Handles colors with or without a # prefix.
+ */
+function colorDriver(name: string, color?: string): string {
+  if (!color) return name;
+  const hex = color.startsWith('#') ? color : '#' + color;
+  return chalk.hex(hex)(name);
+}
+
 // -- Terminal width --
 
 /**
@@ -93,6 +103,48 @@ export function colorPosition(pos: number): string {
   return String(pos);
 }
 
+// -- Country flag emoji --
+
+/**
+ * Mapping of 3-letter IOC country codes (as returned by the OpenF1 API) to
+ * 2-letter ISO 3166-1 alpha-2 codes, used to build flag emoji.
+ */
+const IOC_TO_ISO: Record<string, string> = {
+  GBR: 'GB', NED: 'NL', MON: 'MC', GER: 'DE', ESP: 'ES', FRA: 'FR',
+  AUS: 'AU', CAN: 'CA', ITA: 'IT', BRA: 'BR', MEX: 'MX', JPN: 'JP',
+  CHN: 'CN', FIN: 'FI', DEN: 'DK', SWE: 'SE', NOR: 'NO', BEL: 'BE',
+  USA: 'US', NZL: 'NZ', THA: 'TH', RSA: 'ZA', SUI: 'CH', AUT: 'AT',
+  ARG: 'AR', POR: 'PT',
+};
+
+/**
+ * Convert a 2-letter ISO code to a flag emoji using regional indicator symbols.
+ */
+function isoToFlag(iso: string): string {
+  if (iso.length !== 2) return '';
+  const upper = iso.toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return '';
+  const A = 0x1f1e6;
+  const c1 = A + (upper.charCodeAt(0) - 65);
+  const c2 = A + (upper.charCodeAt(1) - 65);
+  return String.fromCodePoint(c1) + String.fromCodePoint(c2);
+}
+
+/**
+ * Convert a 3-letter IOC country code (or a 2-letter ISO code) to a flag
+ * emoji. Returns an empty string for unknown codes.
+ */
+export function countryCodeToFlag(code: string): string {
+  if (!code) return '';
+  const upper = code.toUpperCase();
+  // If it is already a 2-letter code, use it directly
+  if (upper.length === 2 && /^[A-Z]{2}$/.test(upper)) return isoToFlag(upper);
+  // Otherwise look up the IOC -> ISO mapping
+  const iso = IOC_TO_ISO[upper];
+  if (!iso) return '';
+  return isoToFlag(iso);
+}
+
 /**
  * Return a colored label for a session type.
  */
@@ -131,6 +183,146 @@ export function sessionTypeEmoji(type: string): string {
     default:
       return '\u25CF'; // bullet
   }
+}
+
+// -- Horizontal bar chart --
+
+/**
+ * Build a proportional horizontal bar using block characters.
+ * Filled portions use \u2588, empty portions use \u2591.
+ * The bar width is proportional to points/maxPoints, clamped to [0, maxWidth].
+ * Colored with the given team color (hex with or without #), or F1 red by default.
+ */
+export function makeBar(points: number, maxPoints: number, maxWidth: number, color?: string): string {
+  if (maxWidth <= 0) return '';
+  if (maxPoints <= 0 || points <= 0) {
+    const empty = '\u2591'.repeat(maxWidth);
+    return chalk.gray(empty);
+  }
+  const ratio = Math.min(points / maxPoints, 1);
+  const filled = Math.round(ratio * maxWidth);
+  const empty = maxWidth - filled;
+  const hex = color ? (color.startsWith('#') ? color : '#' + color) : F1_RED;
+  const bar = chalk.hex(hex)('\u2588'.repeat(filled)) + chalk.gray('\u2591'.repeat(empty));
+  return bar;
+}
+
+// -- Countdown timer --
+
+/**
+ * Format a countdown from now to a target date.
+ * - "Starts in Xm" if under 1 hour
+ * - "Starts in Xh Ym" if under 1 day
+ * - "Starts in Xd Yh" if over 1 day
+ * - "Started" if the target is already in the past
+ */
+export function formatCountdown(targetDate: Date, now: Date = new Date()): string {
+  const diffMs = targetDate.getTime() - now.getTime();
+  if (diffMs <= 0) return 'Started';
+  const totalMins = Math.floor(diffMs / 60_000);
+  const totalHours = Math.floor(diffMs / 3_600_000);
+  const days = Math.floor(diffMs / 86_400_000);
+  if (totalMins < 60) {
+    return `Starts in ${totalMins}m`;
+  }
+  if (totalHours < 24) {
+    const mins = totalMins % 60;
+    return `Starts in ${totalHours}h ${mins}m`;
+  }
+  const hours = totalHours % 24;
+  return `Starts in ${days}d ${hours}h`;
+}
+
+/**
+ * Return a blinking red "LIVE" indicator using ANSI escape codes.
+ * Uses blink (SGR 5) + red (SGR 31).
+ */
+export function liveIndicator(): string {
+  return '\x1b[5m\x1b[31mLIVE\x1b[0m';
+}
+
+// -- Color-coded gap to leader --
+
+/**
+ * Color a gap-to-leader string based on its value.
+ * - "LEADER" -> gold bold
+ * - gap under 5 seconds -> green
+ * - gap 5-30 seconds -> yellow
+ * - gap over 30 seconds or a string gap (lapped) -> red
+ */
+export function colorGap(gap: string, gapValue?: number): string {
+  if (gap === 'LEADER') return chalk.hex(GOLD).bold(gap);
+  if (gapValue !== undefined && !Number.isNaN(gapValue)) {
+    if (gapValue < 5) return chalk.green(gap);
+    if (gapValue <= 30) return chalk.yellow(gap);
+    return chalk.red(gap);
+  }
+  // String gap (e.g. "+1 LAP") or no numeric value -> red
+  return chalk.red(gap);
+}
+
+// -- ASCII podium graphic --
+
+/**
+ * Render a compact ASCII podium for the top 3 finishers.
+ * Driver last names are truncated to 10 characters. Names are colored with
+ * team colors when provided. The 1st-place box sits centered above the
+ * 2nd-place (left) and 3rd-place (right) boxes.
+ */
+export function createPodiumGraphic(
+  top3: Array<{ position: number; driver: string; teamColor?: string }>
+): string {
+  // Find entries by position
+  const p1 = top3.find((e) => e.position === 1);
+  const p2 = top3.find((e) => e.position === 2);
+  const p3 = top3.find((e) => e.position === 3);
+  if (!p1 || !p2 || !p3) return '';
+
+  const width = 10; // inner width of each box
+  const pad = (s: string) => s.padEnd(width).slice(0, width);
+
+  const name1 = pad(p1.driver.toUpperCase());
+  const name2 = pad(p2.driver.toUpperCase());
+  const name3 = pad(p3.driver.toUpperCase());
+
+  const c1 = colorDriver(name1, p1.teamColor);
+  const c2 = colorDriver(name2, p2.teamColor);
+  const c3 = colorDriver(name3, p3.teamColor);
+
+  const boxW = 12; // total box width including borders
+  const top = '+----------+';
+  const mid = (n: string) => `| ${n} |`;
+  const bot = '+----------+';
+
+  // Layout: lower row is [4 spaces][box][2 spaces][box] = 4+12+2+12 = 30 cols
+  // Upper box (12 cols) centered: (30-12)/2 = 9 spaces indent
+  const upperIndent = 9;
+  const lowerIndent = 4;
+  const gap = 2;
+
+  // Label positions: center each 3-char label over its box
+  const upperLabelCol = upperIndent + (boxW - 3) / 2; // 9 + 4.5 = 13 -> floor 14
+  const leftLabelCol = lowerIndent + (boxW - 3) / 2;  // 4 + 4.5 = 8 -> floor 9
+  const rightBoxCol = lowerIndent + boxW + gap;        // 4+12+2 = 18
+  const rightLabelCol = rightBoxCol + (boxW - 3) / 2;  // 18+4.5 = 22 -> floor 23
+
+  const sp = (n: number) => ' '.repeat(Math.floor(n));
+  const labelLine2 = sp(leftLabelCol) + '2nd' + sp(rightLabelCol - leftLabelCol - 3) + '3rd';
+
+  const lines: string[] = [
+    '',
+    sp(upperLabelCol) + '1st',
+    sp(upperIndent) + top,
+    sp(upperIndent) + mid(c1),
+    sp(upperIndent) + bot,
+    labelLine2,
+    sp(lowerIndent) + top + sp(gap) + top,
+    sp(lowerIndent) + mid(c2) + sp(gap) + mid(c3),
+    sp(lowerIndent) + bot + sp(gap) + bot,
+    '',
+  ];
+
+  return lines.join('\n');
 }
 
 // -- Table styling helpers --
@@ -185,6 +377,9 @@ export function createResultsTable(
     gap: string;
     points: number;
     dnf?: boolean;
+    teamColor?: string;
+    countryCode?: string;
+    gapValue?: number;
   }>
 ): string {
   const table = new Table({
@@ -196,13 +391,16 @@ export function createResultsTable(
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
     const dnfLabel = r.dnf ? chalk.red(' DNF') : '';
+    const flag = r.countryCode ? countryCodeToFlag(r.countryCode) : '';
+    const driverName = flag ? `${flag} ${r.driver}` : r.driver;
+    const coloredDriver = colorDriver(driverName, r.teamColor);
     const cells: string[] = [
       colorPosition(r.position),
-      r.driver,
+      coloredDriver,
       r.team,
       String(r.laps),
       r.time + dnfLabel,
-      r.gap,
+      colorGap(r.gap, r.gapValue),
       String(r.points),
     ];
     table.push(styleRow(cells, i));
@@ -215,20 +413,37 @@ export function createResultsTable(
  * Create a table for championship standings.
  */
 export function createStandingsTable(
-  entries: Array<{ position: number; name: string; points: number; change?: string }>,
+  entries: Array<{
+    position: number;
+    name: string;
+    points: number;
+    change?: string;
+    teamColor?: string;
+  }>,
   title: string
 ): string {
   const header = chalk.bold.cyan(`\n  ${title}\n`);
   const table = new Table({
-    head: ['Pos', 'Name', 'Points', 'Chg'],
+    head: ['Pos', 'Name', 'Points', 'Bar', 'Chg'],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([5, 30, 10, 8]),
+    colWidths: proportionalWidths([5, 28, 8, 14, 8]),
   });
+
+  const maxPoints = entries.length > 0 ? entries[0].points : 0;
+  const barMaxWidth = 12;
 
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const changeStr = e.change || '-';
-    const cells: string[] = [colorPosition(e.position), e.name, String(e.points), changeStr as string];
+    const coloredName = colorDriver(e.name, e.teamColor);
+    const bar = makeBar(e.points, maxPoints, barMaxWidth, e.teamColor);
+    const cells: string[] = [
+      colorPosition(e.position),
+      coloredName,
+      String(e.points),
+      bar,
+      changeStr as string,
+    ];
     table.push(styleRow(cells, i));
   }
 
@@ -301,6 +516,7 @@ export function createDriverTable(
     name: string;
     number: number;
     team: string;
+    teamColor?: string;
     countryCode: string | null;
     headshotUrl: string;
     seasonPoints: number;
@@ -312,9 +528,15 @@ export function createDriverTable(
     colWidths: proportionalWidths([18, 40]),
   });
 
-  table.push(['Name', driver.name]);
+  const flag = driver.countryCode ? countryCodeToFlag(driver.countryCode) : '';
+  const nameDisplay = flag ? `${flag} ${driver.name}` : driver.name;
+  const teamColor = driver.teamColor
+    ? (driver.teamColor.startsWith('#') ? driver.teamColor : '#' + driver.teamColor)
+    : '#ffffff';
+
+  table.push(['Name', nameDisplay]);
   table.push(['Number', chalk.bold(String(driver.number))]);
-  table.push(['Team', chalk.hex(driver.team === 'McLaren' ? 'F47600' : '#ffffff')(driver.team)]);
+  table.push(['Team', chalk.hex(teamColor)(driver.team)]);
   table.push(['Nationality', driver.countryCode ?? '-']);
   table.push(['Headshot', driver.headshotUrl || '-']);
   table.push(['Season Points', chalk.yellow(String(driver.seasonPoints))]);

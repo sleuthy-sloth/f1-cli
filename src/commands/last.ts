@@ -1,6 +1,7 @@
 import { api } from '../api/client.js';
 import {
   createResultsTable,
+  createPodiumGraphic,
   formatDuration,
   formatGap,
 } from '../utils/formatting.js';
@@ -130,19 +131,37 @@ export async function lastCommand(jsonMode = false): Promise<void> {
   // Full results table
   const tableResults = results.slice(0, 10).map((r) => {
     const driver = driverMap.get(r.driver_number);
+    const teamColor = driver?.team_colour;
+    const countryCode = driver?.country_code ?? undefined;
+    const numericGap = typeof r.gap_to_leader === 'number' ? r.gap_to_leader : undefined;
     return {
       position: r.position,
-      driver: driver?.full_name ?? `Driver #${r.driver_number}`,
+      driver: driver ? driver.last_name.toUpperCase() : `Driver #${r.driver_number}`,
       team: driver?.team_name ?? 'Unknown',
       laps: r.number_of_laps,
       time: formatDuration(r.duration),
       gap: formatGap(r.gap_to_leader),
       points: r.points,
       dnf: r.dnf,
+      teamColor,
+      countryCode,
+      gapValue: numericGap,
     };
   });
 
   console.log(chalk.dim('\n  Top 10:\n'));
+
+  // Podium graphic for top 3
+  if (tableResults.length >= 3) {
+    const podium = tableResults.slice(0, 3).map((r) => ({
+      position: r.position,
+      driver: r.driver,
+      teamColor: r.teamColor,
+    }));
+    const graphic = createPodiumGraphic(podium);
+    if (graphic) console.log(graphic);
+  }
+
   console.log(createResultsTable(tableResults));
   printTrailingBlank();
 }
