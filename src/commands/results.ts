@@ -5,13 +5,24 @@ import {
   formatGap,
 } from '../utils/formatting.js';
 import { printTrailingBlank } from '../utils/display.js';
+import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function resultsCommand(year?: number, round?: number): Promise<void> {
+export async function resultsCommand(
+  year?: number,
+  round?: number,
+  jsonMode = false
+): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
-  const meetings = await api.getMeetings({ year: targetYear });
+  const [meetings, allSessions] = await Spinner.with('Fetching race data', () =>
+    Promise.all([
+      api.getMeetings({ year: targetYear }),
+      api.getSessions({ year: targetYear }),
+    ])
+  );
+
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 
   let targetMeeting;
@@ -22,11 +33,11 @@ export async function resultsCommand(year?: number, round?: number): Promise<voi
       process.exit(1);
     }
   } else {
-    // Find the most recent completed race
-    // Working backwards through meetings to find one with completed race results
+    // Find the most recent completed race -- filter sessions client-side
+    // (single API call for the year, no N+1 per-meeting fetches)
     for (let i = raceMeetings.length - 1; i >= 0; i--) {
       const m = raceMeetings[i];
-      const sessions = await api.getSessions({ meeting_key: m.meeting_key });
+      const sessions = allSessions.filter((s) => s.meeting_key === m.meeting_key);
       const raceSession = sessions.find(
         (s) => s.session_type === 'Race' && new Date(s.date_end) < now
       );
@@ -42,8 +53,8 @@ export async function resultsCommand(year?: number, round?: number): Promise<voi
     }
   }
 
-  // Get sessions for the target meeting
-  const sessions = await api.getSessions({ meeting_key: targetMeeting.meeting_key });
+  // Filter sessions for the target meeting (already fetched)
+  const sessions = allSessions.filter((s) => s.meeting_key === targetMeeting.meeting_key);
   const raceSession = sessions.find((s) => s.session_type === 'Race');
 
   if (!raceSession) {
@@ -52,10 +63,12 @@ export async function resultsCommand(year?: number, round?: number): Promise<voi
   }
 
   // Get results and drivers
-  const [results, drivers] = await Promise.all([
-    api.getSessionResults({ session_key: raceSession.session_key }),
-    api.getDrivers({ session_key: raceSession.session_key }),
-  ]);
+  const [results, drivers] = await Spinner.with('Fetching results', () =>
+    Promise.all([
+      api.getSessionResults({ session_key: raceSession.session_key }),
+      api.getDrivers({ session_key: raceSession.session_key }),
+    ])
+  );
 
   // Sort by position
   results.sort((a, b) => a.position - b.position);
@@ -78,6 +91,16 @@ export async function resultsCommand(year?: number, round?: number): Promise<voi
       dnf: r.dnf,
     };
   });
+
+  if (jsonMode) {
+    console.log(JSON.stringify({
+      meeting: targetMeeting.meeting_official_name,
+      year: targetYear,
+      session_key: raceSession.session_key,
+      results: tableResults,
+    }, null, 2));
+    return;
+  }
 
   console.log(chalk.bold.cyan(`\n  ${targetMeeting.meeting_official_name}\n`));
   console.log(createResultsTable(tableResults));

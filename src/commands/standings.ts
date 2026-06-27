@@ -1,17 +1,20 @@
 import { api } from '../api/client.js';
 import { createStandingsTable } from '../utils/formatting.js';
 import { printTrailingBlank } from '../utils/display.js';
+import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function standingsCommand(year?: number): Promise<void> {
+export async function standingsCommand(year?: number, jsonMode = false): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
   // Fetch all meetings and all sessions for the year in one call each
-  const [meetings, allSessions] = await Promise.all([
-    api.getMeetings({ year: targetYear }),
-    api.getSessions({ year: targetYear }),
-  ]);
+  const [meetings, allSessions] = await Spinner.with('Fetching standings', () =>
+    Promise.all([
+      api.getMeetings({ year: targetYear }),
+      api.getSessions({ year: targetYear }),
+    ])
+  );
 
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 
@@ -33,19 +36,21 @@ export async function standingsCommand(year?: number): Promise<void> {
   }
 
   // Get championship data and driver info
-  const [standingsDrivers, standingsTeams, drivers] = await Promise.all([
-    api.getChampionshipDrivers({
-      session_key: latestSessionKey,
-      meeting_key: latestMeetingKey,
-    }),
-    api.getChampionshipTeams({
-      session_key: latestSessionKey,
-      meeting_key: latestMeetingKey,
-    }),
-    api.getDrivers({
-      session_key: typeof latestSessionKey === 'number' ? latestSessionKey : 'latest',
-    }),
-  ]);
+  const [standingsDrivers, standingsTeams, drivers] = await Spinner.with('Fetching championship', () =>
+    Promise.all([
+      api.getChampionshipDrivers({
+        session_key: latestSessionKey,
+        meeting_key: latestMeetingKey,
+      }),
+      api.getChampionshipTeams({
+        session_key: latestSessionKey,
+        meeting_key: latestMeetingKey,
+      }),
+      api.getDrivers({
+        session_key: typeof latestSessionKey === 'number' ? latestSessionKey : 'latest',
+      }),
+    ])
+  );
 
   // Build driver number -> name lookup
   const driverMap = new Map(drivers.map((d) => [d.driver_number, d]));
@@ -85,6 +90,29 @@ export async function standingsCommand(year?: number): Promise<void> {
       change: changeStr,
     };
   });
+
+  if (jsonMode) {
+    console.log(JSON.stringify({
+      year: targetYear,
+      drivers: sortedDrivers.map((d) => {
+        const driver = driverMap.get(d.driver_number);
+        return {
+          position: d.position_current,
+          name: driver?.full_name ?? `Driver #${d.driver_number}`,
+          team: driver?.team_name ?? 'Unknown',
+          points: d.points_current,
+          positionChange: d.position_start - d.position_current,
+        };
+      }),
+      constructors: sortedTeams.map((t) => ({
+        position: t.position_current,
+        name: t.team_name,
+        points: t.points_current,
+        positionChange: t.position_start - t.position_current,
+      })),
+    }, null, 2));
+    return;
+  }
 
   console.log(chalk.bold(`\n  ${targetYear} Formula 1 Championship Standings\n`));
   console.log(createStandingsTable(driverEntries, 'Drivers Championship'));

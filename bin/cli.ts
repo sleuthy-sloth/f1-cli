@@ -7,15 +7,24 @@ import { resultsCommand } from '../src/commands/results.js';
 import { standingsCommand } from '../src/commands/standings.js';
 import { lastCommand } from '../src/commands/last.js';
 import { todayCommand } from '../src/commands/today.js';
+import { driverCommand } from '../src/commands/driver.js';
 import { VERSION } from '../src/version.js';
 import { showBanner, showHelp } from '../src/utils/display.js';
 
 const program = new Command();
 
+// Global --json flag: stored on the program, each command checks it
+let jsonMode = false;
+
 program
   .name('f1')
   .description('Formula 1 data in your terminal')
   .version(VERSION)
+  .option('--json', 'Output raw JSON instead of formatted tables')
+  .hook('preAction', (thisCommand) => {
+    const opts = thisCommand.opts();
+    jsonMode = opts.json === true;
+  })
   .action(() => {
     showBanner();
     showHelp(program);
@@ -25,7 +34,7 @@ program
   .command('schedule')
   .description('Show the next 5 upcoming races with session times')
   .action(() => {
-    scheduleCommand().catch(handleError);
+    scheduleCommand(jsonMode).catch(handleError);
   });
 
 program
@@ -34,7 +43,7 @@ program
   .argument('[year]', 'Year (e.g. 2025)', parseInt)
   .argument('[round]', 'Round number (e.g. 1)', parseInt)
   .action((year?: number, round?: number) => {
-    resultsCommand(year, round).catch(handleError);
+    resultsCommand(year, round, jsonMode).catch(handleError);
   });
 
 program
@@ -42,25 +51,40 @@ program
   .description('Show current driver and constructor championship standings')
   .argument('[year]', 'Year (e.g. 2025)', parseInt)
   .action((year?: number) => {
-    standingsCommand(year).catch(handleError);
+    standingsCommand(year, jsonMode).catch(handleError);
   });
 
 program
   .command('last')
   .description('Show a quick summary of the most recent completed race')
   .action(() => {
-    lastCommand().catch(handleError);
+    lastCommand(jsonMode).catch(handleError);
   });
 
 program
   .command('today')
   .description('Show what is happening this race weekend')
   .action(() => {
-    todayCommand().catch(handleError);
+    todayCommand(jsonMode).catch(handleError);
+  });
+
+// Alias: "f1 next" does the same thing as "f1 today"
+program
+  .command('next')
+  .description('Alias for "today" -- show what is happening this race weekend')
+  .action(() => {
+    todayCommand(jsonMode).catch(handleError);
+  });
+
+program
+  .command('driver [name]')
+  .description('Search for a driver by name and show bio + season stats')
+  .action((name?: string) => {
+    driverCommand(name, jsonMode).catch(handleError);
   });
 
 function handleError(err: Error): void {
-  // Network/fetch errors — show a human-friendly message
+  // Network/fetch errors -- show a human-friendly message
   if (
     err.message.includes('fetch') ||
     err.message.includes('network') ||

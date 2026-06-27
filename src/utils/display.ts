@@ -10,7 +10,7 @@ const CHECKERBOARD = chalk.hex(RED)('\u2588\u2588') + chalk.white('\u2588\u2588'
  */
 export function showBanner(): void {
   console.log();
-  console.log(`  ${chalk.bold.hex(RED)('F1')} ${chalk.dim('\u2014')} ${chalk.white('Formula 1 in your terminal')}`);
+  console.log(`  ${chalk.bold.hex(RED)('F1')} ${chalk.dim('--')} ${chalk.white('Formula 1 in your terminal')}`);
   console.log(`  ${CHECKERBOARD} ${chalk.dim('v' + VERSION)}\n`);
 }
 
@@ -33,6 +33,7 @@ export function showHelp(program: Command): void {
   console.log(`\n  ${chalk.bold('Flags')}`);
   console.log(`    ${chalk.cyan('--help'.padEnd(12))}${chalk.dim('Show full help')}`);
   console.log(`    ${chalk.cyan('--version'.padEnd(12))}${chalk.dim('Show version')}`);
+  console.log(`    ${chalk.cyan('--json'.padEnd(12))}${chalk.dim('Output raw JSON instead of tables')}`);
   console.log('\n');
 }
 

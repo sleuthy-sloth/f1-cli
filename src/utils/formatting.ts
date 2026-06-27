@@ -1,13 +1,27 @@
 import chalk from 'chalk';
 import Table from 'cli-table3';
 
-// ── Color palette ──────────────────────────────────────────────
+// -- Color palette --
 const F1_RED = '#e10600';
 const GOLD = '#ffd700';
 const SILVER = '#a8a8a8';
 const BRONZE = '#cd7f32';
 
-// ── Helpers ─────────────────────────────────────────────────────
+// -- Terminal width --
+
+/**
+ * Detect the current terminal width, with a sensible fallback.
+ * Returns Infinity in non-TTY environments (tests, piped output) so
+ * table scaling is a no-op and ideal widths are used as-is.
+ */
+export function getTerminalWidth(): number {
+  if (!process.stdout.isTTY) return Infinity;
+  return process.stdout.columns && process.stdout.columns > 0
+    ? process.stdout.columns
+    : 80;
+}
+
+// -- Helpers --
 
 /**
  * Format a timezone offset string like "11:00:00" to a short label like "UTC+11"
@@ -23,28 +37,28 @@ export function formatGmtOffset(gmtOffset: string): string {
 }
 
 /**
- * Convert an ISO date string + GMT offset to locale-friendly display.
- * Returns a readable format like "Sat, 15 Mar 2025, 15:30 AEDT"
+ * Convert an ISO date string to the user's local timezone for display.
+ *
+ * Parsing the ISO string as a Date and reading getHours()/getMinutes()/getDay()
+ * already returns local-time values -- the JS runtime handles the conversion.
+ * The gmtOffset parameter is kept for backwards compatibility but is NOT used
+ * in the calculation. The previous implementation double-counted by adding both
+ * the circuit offset and the local timezone offset.
+ *
+ * Returns a readable format like "Sat, 15 Mar 2025, 15:30"
  */
-export function formatSessionTime(dateStart: string, gmtOffset: string): string {
+export function formatSessionTime(dateStart: string, _gmtOffset?: string): string {
   const d = new Date(dateStart);
-  const offsetParts = gmtOffset.split(':');
-  const offsetHours = parseInt(offsetParts[0], 10);
-  const offsetMinutes = parseInt(offsetParts[1], 10);
-  const totalOffsetMs =
-    (offsetHours * 60 + (offsetHours < 0 ? -offsetMinutes : offsetMinutes)) * 60 * 1000;
-
-  const localTime = new Date(d.getTime() + totalOffsetMs + d.getTimezoneOffset() * 60000);
 
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-  const day = days[localTime.getDay()];
-  const date = localTime.getDate();
-  const month = months[localTime.getMonth()];
-  const year = localTime.getFullYear();
-  const hours = String(localTime.getHours()).padStart(2, '0');
-  const mins = String(localTime.getMinutes()).padStart(2, '0');
+  const day = days[d.getDay()];
+  const date = d.getDate();
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const hours = String(d.getHours()).padStart(2, '0');
+  const mins = String(d.getMinutes()).padStart(2, '0');
 
   return `${day}, ${date} ${month} ${year}, ${hours}:${mins}`;
 }
@@ -60,7 +74,7 @@ export function formatDuration(seconds: number | null): string {
 }
 
 /**
- * Format gap to leader — could be a number (seconds) or a string (laps down).
+ * Format gap to leader -- could be a number (seconds) or a string (laps down).
  */
 export function formatGap(gap: number | string): string {
   if (typeof gap === 'string') return gap;
@@ -119,7 +133,7 @@ export function sessionTypeEmoji(type: string): string {
   }
 }
 
-// ── Table styling helpers ──────────────────────────────────────
+// -- Table styling helpers --
 
 /**
  * A subtle horizontal rule to place above tables.
@@ -138,7 +152,25 @@ function styleRow<T>(row: T[], index: number): T[] {
   return row;
 }
 
-// ── Table builders ─────────────────────────────────────────────
+/**
+ * Given a set of column weights and a total terminal width, compute proportional
+ * column widths that fit inside the terminal. Each weight is a relative share;
+ * the minimum width for any column is 4 characters (plus borders).
+ *
+ * In non-TTY environments (tests, piped output) the weights are used as-is
+ * so tables render at their ideal widths.
+ */
+function proportionalWidths(weights: number[], minWidth = 4): number[] {
+  const termWidth = getTerminalWidth();
+  if (termWidth === Infinity) return weights;
+  // cli-table3 borders/padding consume roughly 1 char per column + 1 per separator
+  const borderOverhead = weights.length + 1;
+  const available = Math.max(termWidth - borderOverhead, weights.length * minWidth);
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
+  return weights.map((w) => Math.max(minWidth, Math.floor((w / totalWeight) * available)));
+}
+
+// -- Table builders --
 
 /**
  * Create a colored table for race results.
@@ -158,7 +190,7 @@ export function createResultsTable(
   const table = new Table({
     head: ['Pos', 'Driver', 'Team', 'Laps', 'Time', 'Gap', 'Pts'],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [7, 22, 20, 6, 10, 12, 5],
+    colWidths: proportionalWidths([5, 22, 20, 6, 10, 12, 5]),
   });
 
   for (let i = 0; i < results.length; i++) {
@@ -190,7 +222,7 @@ export function createStandingsTable(
   const table = new Table({
     head: ['Pos', 'Name', 'Points', 'Chg'],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [7, 30, 10, 8],
+    colWidths: proportionalWidths([5, 30, 10, 8]),
   });
 
   for (let i = 0; i < entries.length; i++) {
@@ -219,7 +251,7 @@ export function createScheduleTable(
   const table = new Table({
     head: ['#', 'Grand Prix', 'Location', 'Circuit', 'Qualifying', 'Race'],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [5, 28, 18, 18, 24, 24],
+    colWidths: proportionalWidths([3, 28, 18, 18, 24, 24]),
   });
 
   for (let i = 0; i < races.length; i++) {
@@ -248,7 +280,7 @@ export function createSessionTable(
   const table = new Table({
     head: [chalk.cyan('Session'), chalk.cyan('Date'), chalk.cyan('Local Time')],
     style: { head: ['cyan'], border: ['gray'] },
-    colWidths: [24, 32, 16],
+    colWidths: proportionalWidths([24, 32, 16]),
   });
 
   for (let i = 0; i < sessions.length; i++) {
@@ -259,4 +291,36 @@ export function createSessionTable(
   }
 
   return headerBar() + chalk.dim('Sessions') + '\n' + table.toString();
+}
+
+/**
+ * Create a table for driver info (bio + season stats).
+ */
+export function createDriverTable(
+  driver: {
+    name: string;
+    number: number;
+    team: string;
+    countryCode: string | null;
+    headshotUrl: string;
+    seasonPoints: number;
+    championshipPosition: number | null;
+  }
+): string {
+  const table = new Table({
+    style: { head: ['cyan'], border: ['gray'] },
+    colWidths: proportionalWidths([18, 40]),
+  });
+
+  table.push(['Name', driver.name]);
+  table.push(['Number', chalk.bold(String(driver.number))]);
+  table.push(['Team', chalk.hex(driver.team === 'McLaren' ? 'F47600' : '#ffffff')(driver.team)]);
+  table.push(['Nationality', driver.countryCode ?? '-']);
+  table.push(['Headshot', driver.headshotUrl || '-']);
+  table.push(['Season Points', chalk.yellow(String(driver.seasonPoints))]);
+  table.push(
+    ['Championship Pos', driver.championshipPosition ? colorPosition(driver.championshipPosition) : '-']
+  );
+
+  return headerBar() + chalk.dim('Driver') + '\n' + table.toString();
 }
