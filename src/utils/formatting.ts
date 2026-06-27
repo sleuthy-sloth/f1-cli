@@ -86,7 +86,8 @@ export function formatDuration(seconds: number | null): string {
 /**
  * Format gap to leader -- could be a number (seconds) or a string (laps down).
  */
-export function formatGap(gap: number | string): string {
+export function formatGap(gap: number | string | null): string {
+  if (gap === null || gap === undefined) return '-';
   if (typeof gap === 'string') return gap;
   if (gap === 0) return 'LEADER';
   return `+${gap.toFixed(1)}s`;
@@ -251,8 +252,9 @@ export function liveIndicator(): string {
  * - gap over 30 seconds or a string gap (lapped) -> red
  */
 export function colorGap(gap: string, gapValue?: number): string {
+  if (gap === '-') return chalk.dim(gap);
   if (gap === 'LEADER') return chalk.hex(GOLD).bold(gap);
-  if (gapValue !== undefined && !Number.isNaN(gapValue)) {
+  if (gapValue !== undefined && gapValue !== null && !Number.isNaN(gapValue)) {
     if (gapValue < 5) return chalk.green(gap);
     if (gapValue <= 30) return chalk.yellow(gap);
     return chalk.red(gap);

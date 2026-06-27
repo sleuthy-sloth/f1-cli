@@ -61,7 +61,7 @@ export interface SessionResult {
   dns: boolean;
   dsq: boolean;
   duration: number | null;
-  gap_to_leader: number | string;
+  gap_to_leader: number | string | null;
   meeting_key: number;
   session_key: number;
 }

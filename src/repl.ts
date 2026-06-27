@@ -118,7 +118,8 @@ function printHelp(): void {
   console.log(`    ${chalk.cyan('/exit'.padEnd(maxName + 1))}${chalk.dim(' '.repeat(maxAlias + 2))}Quit the REPL`);
   console.log();
   console.log(`  ${chalk.bold('Tips')}`);
-  console.log(`    ${chalk.dim('-- Type a command without / to search (e.g.')} ${chalk.cyan('verstappen')}${chalk.dim(')')}`);
+  console.log(`    ${chalk.dim('-- Commands work with or without / (e.g.')} ${chalk.cyan('/schedule')} ${chalk.dim('or')} ${chalk.cyan('schedule')}${chalk.dim(')')}`);
+  console.log(`    ${chalk.dim('-- Type a driver name to search (e.g.')} ${chalk.cyan('verstappen')}${chalk.dim(')')}`);
   console.log(`    ${chalk.dim('-- Add')} ${chalk.cyan('--json')} ${chalk.dim('to any command for raw JSON output')}`);
   console.log(`    ${chalk.dim('-- Press')} ${chalk.cyan('Tab')} ${chalk.dim('to autocomplete commands')}`);
   console.log(`    ${chalk.dim('-- Press')} ${chalk.cyan('Ctrl+C')} ${chalk.dim('or type')} ${chalk.cyan('/exit')} ${chalk.dim('to quit')}`);
@@ -179,9 +180,20 @@ export async function startRepl(): Promise<void> {
       return;
     }
 
-    // Non-/ input -- treat as driver search
+    // Non-/ input -- check if it matches a command name or alias first
     if (!line.startsWith('/')) {
-      await runCommand(['driver', line], rl);
+      const parts = line.split(/\s+/);
+      const firstWord = parts[0].toLowerCase();
+      const cmd = findCommand(firstWord);
+      if (cmd) {
+        // It's a command alias typed without / -- run it
+        const jsonMode = parts.includes('--json');
+        const cleanArgs = parts.slice(1).filter((a) => a !== '--json');
+        await runCommand([cmd.name, ...cleanArgs], rl, jsonMode);
+      } else {
+        // Not a command -- treat as driver search
+        await runCommand(['driver', line], rl);
+      }
       rl.prompt();
       return;
     }
