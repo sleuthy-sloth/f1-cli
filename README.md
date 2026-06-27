@@ -142,6 +142,8 @@ $ f1 standings
 
 ## Commands
 
+### CLI mode
+
 ```
 f1 schedule
   Show the next 5 upcoming races with session times in your local timezone.
@@ -154,7 +156,7 @@ f1 results [year] [round]
 f1 standings [year]
   Show current driver and constructor championship standings. Defaults to the
   current season. Position change (+X/-X) shows movement since the previous
-  race. Top 3 drivers and teams are marked with 🥇🥈🥉 podium medals.
+  race. Top 3 drivers and teams are marked with podium medals.
 
 f1 last
   Quick summary of the most recent completed race -- winner, top 3, and full
@@ -163,7 +165,61 @@ f1 last
 f1 today
   What's happening this race weekend. Shows upcoming sessions if a race weekend
   is in progress, or the next upcoming race if there's a gap.
+
+f1 driver [name]
+  Search for a driver by name (case-insensitive). Shows bio info, team,
+  championship position, and season points.
+
+f1 next
+  Alias for "f1 today".
+
+f1 repl
+  Start the interactive REPL mode (see below).
 ```
+
+### Interactive mode (REPL)
+
+Run `f1` with no arguments, or `f1 repl`, to enter the interactive REPL. All commands are shown on startup so you never have to guess.
+
+```
+$ f1
+
+  F1 -- Formula 1 in your terminal
+  ████████ v0.1.0
+
+  Interactive commands -- type any of these:
+
+    schedule  sched    Show the next 5 upcoming races with session times
+    standings st       Show driver and constructor championship standings [year]
+    results   r        Show race results (defaults to most recent) [year] [round]
+    last      l        Quick summary of the most recent completed race
+    today     t, next  Show what is happening this race weekend
+    driver    d        Search for a driver by name and show bio + season stats [name]
+
+  Other commands
+    /help              Show this help menu
+    /clear             Clear the screen
+    /exit              Quit the REPL
+
+  Tips
+    -- Type a command without / to search (e.g. verstappen)
+    -- Add --json to any command for raw JSON output
+    -- Press Tab to autocomplete commands
+    -- Press Ctrl+C or type /exit to quit
+
+ f1> /schedule
+ f1> /standings 2025
+ f1> /driver verstappen
+ f1> verstappen          (no / needed for driver search)
+ f1> /exit
+```
+
+Features:
+- **Tab completion** -- type `/s` and press Tab to see matching commands
+- **Command aliases** -- `/st` for standings, `/r` for results, `/l` for last, etc.
+- **Driver search** -- type any driver name without `/` to search
+- **--json in REPL** -- `/standings --json` works inside the REPL too
+- **Always-visible help** -- all commands are listed on startup and via `/help`
 
 ## Visual features
 

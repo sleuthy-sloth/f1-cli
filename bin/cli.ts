@@ -9,7 +9,7 @@ import { lastCommand } from '../src/commands/last.js';
 import { todayCommand } from '../src/commands/today.js';
 import { driverCommand } from '../src/commands/driver.js';
 import { VERSION } from '../src/version.js';
-import { showBanner, showHelp } from '../src/utils/display.js';
+import { startRepl } from '../src/repl.js';
 
 const program = new Command();
 
@@ -26,8 +26,8 @@ program
     jsonMode = opts.json === true;
   })
   .action(() => {
-    showBanner();
-    showHelp(program);
+    // No subcommand given -- enter interactive REPL mode
+    startRepl().catch(handleError);
   });
 
 program
@@ -81,6 +81,14 @@ program
   .description('Search for a driver by name and show bio + season stats')
   .action((name?: string) => {
     driverCommand(name, jsonMode).catch(handleError);
+  });
+
+// Interactive REPL mode
+program
+  .command('repl')
+  .description('Start interactive mode with / commands, tab completion, and driver search')
+  .action(() => {
+    startRepl().catch(handleError);
   });
 
 function handleError(err: Error): void {
