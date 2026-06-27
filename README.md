@@ -170,6 +170,11 @@ f1 driver [name]
   Search for a driver by name (case-insensitive). Shows bio info, team,
   championship position, and season points.
 
+f1 circuit [name]
+  Show an ASCII art track map and details for a circuit. Without a name,
+  lists all 23 circuits on the 2026 calendar. Matching is case-insensitive
+  and works on the circuit short name, full name, or Grand Prix name.
+
 f1 next
   Alias for "f1 today".
 
@@ -195,6 +200,7 @@ $ f1
     last      l        Quick summary of the most recent completed race
     today     t, next  Show what is happening this race weekend
     driver    d        Search for a driver by name and show bio + season stats [name]
+    circuit   c, track Show ASCII track map and circuit details [name]
 
   Other commands
     /help              Show this help menu
@@ -253,6 +259,10 @@ f1 last
 
 # What's on this weekend
 f1 today
+
+# Show the track map for a specific circuit
+f1 circuit monza
+f1 circuit suzuka
 ```
 
 ## Why

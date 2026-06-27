@@ -8,6 +8,7 @@ import { standingsCommand } from '../src/commands/standings.js';
 import { lastCommand } from '../src/commands/last.js';
 import { todayCommand } from '../src/commands/today.js';
 import { driverCommand } from '../src/commands/driver.js';
+import { circuitCommand } from '../src/commands/circuit.js';
 import { VERSION } from '../src/version.js';
 import { startRepl } from '../src/repl.js';
 
@@ -81,6 +82,13 @@ program
   .description('Search for a driver by name and show bio + season stats')
   .action((name?: string) => {
     driverCommand(name, jsonMode).catch(handleError);
+  });
+
+program
+  .command('circuit [name]')
+  .description('Show ASCII track map and details for a circuit')
+  .action((name?: string) => {
+    circuitCommand(name, jsonMode).catch(handleError);
   });
 
 // Interactive REPL mode

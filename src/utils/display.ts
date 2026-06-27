@@ -39,6 +39,7 @@ export function showHelp(program: Command): void {
     today: 'f1 today',
     next: 'f1 next',
     driver: 'f1 driver verstappen',
+    circuit: 'f1 circuit monza',
     repl: 'f1 repl',
   };
 

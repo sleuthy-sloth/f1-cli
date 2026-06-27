@@ -8,6 +8,7 @@ import { standingsCommand } from './commands/standings.js';
 import { lastCommand } from './commands/last.js';
 import { todayCommand } from './commands/today.js';
 import { driverCommand } from './commands/driver.js';
+import { circuitCommand } from './commands/circuit.js';
 
 const RED = '#e10600';
 const CHECKERBOARD =
@@ -82,6 +83,17 @@ const COMMANDS: CommandDef[] = [
     run: (args, json) => {
       const name = args.join(' ') || undefined;
       return driverCommand(name, json);
+    },
+  },
+  {
+    name: 'circuit',
+    aliases: ['c', 'track'],
+    args: '[name]',
+    description: 'Show ASCII track map and circuit details',
+    usage: '/circuit monza',
+    run: (args, json) => {
+      const name = args.join(' ') || undefined;
+      return circuitCommand(name, json);
     },
   },
 ];
