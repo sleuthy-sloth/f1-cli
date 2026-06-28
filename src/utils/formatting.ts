@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import Table from 'cli-table3';
 
+type TableInstance = InstanceType<typeof Table>;
+
 // -- Color palette --
 const F1_RED = '#e10600';
 const GOLD = '#ffd700';
@@ -367,6 +369,24 @@ function proportionalWidths(weights: number[], minWidth = 4): number[] {
 // -- Table builders --
 
 /**
+ * Create a Table with no borders, no header separator, and minimal style.
+ * Used when --compact mode is active.
+ */
+function createCompactTable(head: string[], colWidths?: number[]): TableInstance {
+  return new Table({
+    head,
+    style: { head: [], border: [] },
+    colWidths: colWidths ?? proportionalWidths([10, 30]),
+    chars: {
+      'top': '', 'top-mid': '', 'top-left': '', 'top-right': '',
+      'bottom': '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
+      'left': '', 'left-mid': '', 'mid': '', 'mid-mid': '',
+      'right': '', 'right-mid': '', 'middle': ' ',
+    },
+  }) as unknown as TableInstance;
+}
+
+/**
  * Create a colored table for race results.
  */
 export function createResultsTable(
@@ -382,32 +402,40 @@ export function createResultsTable(
     teamColor?: string;
     countryCode?: string;
     gapValue?: number;
-  }>
+  }>,
+  compact = false
 ): string {
-  const table = new Table({
-    head: ['Pos', 'Driver', 'Team', 'Laps', 'Time', 'Gap', 'Pts'],
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([5, 22, 20, 6, 10, 12, 5]),
-  });
+  const head = ['Pos', 'Driver', 'Team', 'Laps', 'Time', 'Gap', 'Pts'];
+  const weights = [5, 22, 20, 6, 10, 12, 5];
+  const table: TableInstance = compact
+    ? createCompactTable(head, proportionalWidths(weights))
+    : new Table({
+        head,
+        style: { head: ['cyan'], border: ['gray'] },
+        colWidths: proportionalWidths(weights),
+      });
 
   for (let i = 0; i < results.length; i++) {
     const r = results[i];
     const dnfLabel = r.dnf ? chalk.red(' DNF') : '';
     const flag = r.countryCode ? countryCodeToFlag(r.countryCode) : '';
     const driverName = flag ? `${flag} ${r.driver}` : r.driver;
-    const coloredDriver = colorDriver(driverName, r.teamColor);
+    const coloredDriver = compact ? driverName : colorDriver(driverName, r.teamColor);
+    const posStr = compact ? String(r.position) : colorPosition(r.position);
+    const gapStr = compact ? r.gap : colorGap(r.gap, r.gapValue);
     const cells: string[] = [
-      colorPosition(r.position),
+      posStr,
       coloredDriver,
       r.team,
       String(r.laps),
       r.time + dnfLabel,
-      colorGap(r.gap, r.gapValue),
+      gapStr,
       String(r.points),
     ];
     table.push(styleRow(cells, i));
   }
 
+  if (compact) return table.toString();
   return headerBar() + chalk.dim('Results') + '\n' + table.toString();
 }
 
@@ -422,14 +450,18 @@ export function createStandingsTable(
     change?: string;
     teamColor?: string;
   }>,
-  title: string
+  title: string,
+  compact = false
 ): string {
-  const header = chalk.bold.cyan(`\n  ${title}\n`);
-  const table = new Table({
-    head: ['Pos', 'Name', 'Points', 'Bar', 'Chg'],
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([5, 28, 8, 14, 8]),
-  });
+  const head = ['Pos', 'Name', 'Points', 'Bar', 'Chg'];
+  const weights = [5, 28, 8, 14, 8];
+  const table: TableInstance = compact
+    ? createCompactTable(head, proportionalWidths(weights))
+    : new Table({
+        head,
+        style: { head: ['cyan'], border: ['gray'] },
+        colWidths: proportionalWidths(weights),
+      });
 
   const maxPoints = entries.length > 0 ? entries[0].points : 0;
   const barMaxWidth = 12;
@@ -437,10 +469,11 @@ export function createStandingsTable(
   for (let i = 0; i < entries.length; i++) {
     const e = entries[i];
     const changeStr = e.change || '-';
-    const coloredName = colorDriver(e.name, e.teamColor);
-    const bar = makeBar(e.points, maxPoints, barMaxWidth, e.teamColor);
+    const coloredName = compact ? e.name : colorDriver(e.name, e.teamColor);
+    const bar = compact ? '' : makeBar(e.points, maxPoints, barMaxWidth, e.teamColor);
+    const posStr = compact ? String(e.position) : colorPosition(e.position);
     const cells: string[] = [
-      colorPosition(e.position),
+      posStr,
       coloredName,
       String(e.points),
       bar,
@@ -449,6 +482,8 @@ export function createStandingsTable(
     table.push(styleRow(cells, i));
   }
 
+  if (compact) return table.toString();
+  const header = chalk.bold.cyan(`\n  ${title}\n`);
   return header + '  ' + headerBar() + chalk.dim(title) + '\n' + table.toString();
 }
 
@@ -463,13 +498,18 @@ export function createScheduleTable(
     raceDate: string;
     qualifyingDate: string;
     circuit: string;
-  }>
+  }>,
+  compact = false
 ): string {
-  const table = new Table({
-    head: ['#', 'Grand Prix', 'Location', 'Circuit', 'Qualifying', 'Race'],
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([3, 28, 18, 18, 24, 24]),
-  });
+  const head = ['#', 'Grand Prix', 'Location', 'Circuit', 'Qualifying', 'Race'];
+  const weights = [3, 28, 18, 18, 24, 24];
+  const table: TableInstance = compact
+    ? createCompactTable(head, proportionalWidths(weights))
+    : new Table({
+        head,
+        style: { head: ['cyan'], border: ['gray'] },
+        colWidths: proportionalWidths(weights),
+      });
 
   for (let i = 0; i < races.length; i++) {
     const r = races[i];
@@ -484,6 +524,7 @@ export function createScheduleTable(
     table.push(styleRow(cells, i));
   }
 
+  if (compact) return table.toString();
   return headerBar() + chalk.dim('Upcoming') + '\n' + table.toString();
 }
 
@@ -492,21 +533,36 @@ export function createScheduleTable(
  * Exported for the today command to use.
  */
 export function createSessionTable(
-  sessions: Array<{ name: string; dateTime: string; sessionType: string }>
+  sessions: Array<{ name: string; dateTime: string; sessionType: string }>,
+  compact = false
 ): string {
-  const table = new Table({
-    head: [chalk.cyan('Session'), chalk.cyan('Date'), chalk.cyan('Local Time')],
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([24, 32, 16]),
-  });
+  const head = [chalk.cyan('Session'), chalk.cyan('Date'), chalk.cyan('Local Time')];
+  const table: TableInstance = compact
+    ? new Table({
+        head: ['Session', 'Date', 'Local Time'],
+        style: { head: [], border: [] },
+        colWidths: proportionalWidths([24, 32, 16]),
+        chars: {
+          'top': '', 'top-mid': '', 'top-left': '', 'top-right': '',
+          'bottom': '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
+          'left': '', 'left-mid': '', 'mid': '', 'mid-mid': '',
+          'right': '', 'right-mid': '', 'middle': ' ',
+        },
+      }) as unknown as TableInstance
+    : new Table({
+        head,
+        style: { head: ['cyan'], border: ['gray'] },
+        colWidths: proportionalWidths([24, 32, 16]),
+      });
 
   for (let i = 0; i < sessions.length; i++) {
     const s = sessions[i];
-    const typeLabel = colorSessionType(s.sessionType);
+    const typeLabel = compact ? s.sessionType : colorSessionType(s.sessionType);
     const cells = [`${sessionTypeEmoji(s.sessionType)} ${s.name}`, s.dateTime, typeLabel];
     table.push(styleRow(cells, i));
   }
 
+  if (compact) return table.toString();
   return headerBar() + chalk.dim('Sessions') + '\n' + table.toString();
 }
 
@@ -523,12 +579,24 @@ export function createDriverTable(
     headshotUrl: string;
     seasonPoints: number;
     championshipPosition: number | null;
-  }
+  },
+  compact = false
 ): string {
-  const table = new Table({
-    style: { head: ['cyan'], border: ['gray'] },
-    colWidths: proportionalWidths([18, 40]),
-  });
+  const table: TableInstance = compact
+    ? new Table({
+        style: { head: [], border: [] },
+        colWidths: proportionalWidths([18, 40]),
+        chars: {
+          'top': '', 'top-mid': '', 'top-left': '', 'top-right': '',
+          'bottom': '', 'bottom-mid': '', 'bottom-left': '', 'bottom-right': '',
+          'left': '', 'left-mid': '', 'mid': '', 'mid-mid': '',
+          'right': '', 'right-mid': '', 'middle': ' ',
+        },
+      }) as unknown as TableInstance
+    : new Table({
+        style: { head: ['cyan'], border: ['gray'] },
+        colWidths: proportionalWidths([18, 40]),
+      });
 
   const flag = driver.countryCode ? countryCodeToFlag(driver.countryCode) : '';
   const nameDisplay = flag ? `${flag} ${driver.name}` : driver.name;
@@ -537,14 +605,17 @@ export function createDriverTable(
     : '#ffffff';
 
   table.push(['Name', nameDisplay]);
-  table.push(['Number', chalk.bold(String(driver.number))]);
-  table.push(['Team', chalk.hex(teamColor)(driver.team)]);
+  table.push(['Number', compact ? String(driver.number) : chalk.bold(String(driver.number))]);
+  table.push(['Team', compact ? driver.team : chalk.hex(teamColor)(driver.team)]);
   table.push(['Nationality', driver.countryCode ?? '-']);
   table.push(['Headshot', driver.headshotUrl || '-']);
-  table.push(['Season Points', chalk.yellow(String(driver.seasonPoints))]);
+  table.push(['Season Points', compact ? String(driver.seasonPoints) : chalk.yellow(String(driver.seasonPoints))]);
   table.push(
-    ['Championship Pos', driver.championshipPosition ? colorPosition(driver.championshipPosition) : '-']
+    ['Championship Pos', driver.championshipPosition
+      ? (compact ? String(driver.championshipPosition) : colorPosition(driver.championshipPosition))
+      : '-']
   );
 
+  if (compact) return table.toString();
   return headerBar() + chalk.dim('Driver') + '\n' + table.toString();
 }

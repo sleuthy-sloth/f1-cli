@@ -5,7 +5,7 @@ import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 import type { Driver, ChampionshipDriver } from '../api/types.js';
 
-export async function driverCommand(name?: string, jsonMode = false): Promise<void> {
+export async function driverCommand(name?: string, jsonMode = false, compact = false): Promise<void> {
   if (!name) {
     console.error(chalk.red('Please provide a driver name. Usage: f1 driver <name>'));
     process.exit(1);
@@ -128,7 +128,9 @@ export async function driverCommand(name?: string, jsonMode = false): Promise<vo
     return;
   }
 
-  console.log(chalk.bold.cyan(`\n  ${driver.full_name}\n`));
-  console.log(createDriverTable(driverInfo));
+  if (!compact) {
+    console.log(chalk.bold.cyan(`\n  ${driver.full_name}\n`));
+  }
+  console.log(createDriverTable(driverInfo, compact));
   printTrailingBlank();
 }
