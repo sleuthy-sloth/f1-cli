@@ -1,6 +1,6 @@
 {
   "name": "f1-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Formula 1 data in your terminal - schedule, results, standings, and session times",
   "type": "module",
   "main": "./dist/bin/cli.js",
