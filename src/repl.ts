@@ -11,6 +11,10 @@ import { todayCommand } from './commands/today.js';
 import { driverCommand } from './commands/driver.js';
 import { circuitCommand } from './commands/circuit.js';
 import { weekendCommand } from './commands/weekend.js';
+import { lapsCommand } from './commands/laps.js';
+import { compareCommand } from './commands/compare.js';
+import { seasonCommand } from './commands/season.js';
+import { configCommand } from './commands/config.js';
 
 const RED = '#e10600';
 const CHECKERBOARD =
@@ -101,10 +105,59 @@ const COMMANDS: CommandDef[] = [
   {
     name: 'weekend',
     aliases: ['wknd', 'w'],
-    args: '',
+    args: '[year]',
     description: 'Visual timeline of the current or next race weekend',
-    usage: '/weekend',
-    run: (_args, json) => weekendCommand(json),
+    usage: '/weekend [year]',
+    run: (args, json) => {
+      const year = args[0] ? parseInt(args[0], 10) : undefined;
+      return weekendCommand(year, json);
+    },
+  },
+  {
+    name: 'laps',
+    aliases: ['lap'],
+    args: '[year] [driver_number]',
+    description: 'Show lap times from the most recent completed race',
+    usage: '/laps [year] [driver_number]',
+    run: (args, json) => {
+      const year = args[0] ? parseInt(args[0], 10) : undefined;
+      const driverNumber = args[1] ? parseInt(args[1], 10) : undefined;
+      return lapsCommand(year, driverNumber, json);
+    },
+  },
+  {
+    name: 'compare',
+    aliases: ['vs', 'head2head'],
+    args: '<driver1> <driver2> [year]',
+    description: 'Compare two drivers head-to-head',
+    usage: '/compare verstappen hamilton',
+    run: (args, json) => {
+      const [d1, d2, yearStr] = args;
+      const year = yearStr ? parseInt(yearStr, 10) : undefined;
+      return compareCommand(d1, d2, year, json);
+    },
+  },
+  {
+    name: 'season',
+    aliases: ['sea'],
+    args: '[year]',
+    description: 'Full championship summary with next race countdown',
+    usage: '/season [year]',
+    run: (args, json) => {
+      const year = args[0] ? parseInt(args[0], 10) : undefined;
+      return seasonCommand(year, json);
+    },
+  },
+  {
+    name: 'config',
+    aliases: [],
+    args: '<set|get> <key> [value]',
+    description: 'Get or set config values (timezone, no-color, no-emoji)',
+    usage: '/config get timezone',
+    run: (args) => {
+      configCommand(args[0], args[1], args[2]);
+      return Promise.resolve();
+    },
   },
 ];
 

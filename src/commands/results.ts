@@ -12,7 +12,8 @@ import chalk from 'chalk';
 export async function resultsCommand(
   year?: number,
   round?: number,
-  jsonMode = false
+  jsonMode = false,
+  compact = false
 ): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
@@ -109,7 +110,9 @@ export async function resultsCommand(
     return;
   }
 
-  console.log(chalk.bold.cyan(`\n  ${targetMeeting.meeting_official_name}\n`));
+  if (!compact) {
+    console.log(chalk.bold.cyan(`\n  ${targetMeeting.meeting_official_name}\n`));
+  }
 
   // Podium graphic for top 3
   if (tableResults.length >= 3) {
@@ -122,6 +125,6 @@ export async function resultsCommand(
     if (graphic) console.log(graphic);
   }
 
-  console.log(createResultsTable(tableResults));
+  console.log(createResultsTable(tableResults, compact));
   printTrailingBlank();
 }

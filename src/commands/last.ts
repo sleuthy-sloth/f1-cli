@@ -9,15 +9,15 @@ import { printTrailingBlank } from '../utils/display.js';
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function lastCommand(jsonMode = false): Promise<void> {
+export async function lastCommand(jsonMode = false, year?: number, compact = false): Promise<void> {
   const now = new Date();
-  const currentYear = now.getFullYear();
+  const targetYear = year ?? now.getFullYear();
 
   // Fetch all meetings and sessions for the year in one call each (no N+1)
   const [meetings, allSessions] = await Spinner.with('Fetching race data', () =>
     Promise.all([
-      api.getMeetings({ year: currentYear }),
-      api.getSessions({ year: currentYear }),
+      api.getMeetings({ year: targetYear }),
+      api.getSessions({ year: targetYear }),
     ])
   );
 
@@ -40,12 +40,12 @@ export async function lastCommand(jsonMode = false): Promise<void> {
     }
   }
 
-  // If no race this year completed, check previous year
-  if (!lastRaceMeeting) {
+  // If no race completed this year (e.g. year just started), check previous year
+  if (!lastRaceMeeting && year === undefined) {
     const [prevMeetings, prevSessions] = await Spinner.with('Fetching previous season', () =>
       Promise.all([
-        api.getMeetings({ year: currentYear - 1 }),
-        api.getSessions({ year: currentYear - 1 }),
+        api.getMeetings({ year: targetYear - 1 }),
+        api.getSessions({ year: targetYear - 1 }),
       ])
     );
     const prevRaceMeetings = prevMeetings.filter((m) => !m.is_cancelled);
@@ -113,7 +113,9 @@ export async function lastCommand(jsonMode = false): Promise<void> {
     return;
   }
 
-  console.log(chalk.bold.cyan(`\n  Last Race: ${lastRaceMeeting.meeting_official_name}\n`));
+  if (!compact) {
+    console.log(chalk.bold.cyan(`\n  Last Race: ${lastRaceMeeting.meeting_official_name}\n`));
+  }
 
   if (winner) {
     console.log(`  Winner: ${chalk.yellow.bold(winner.full_name)} (${winner.team_name})`);
@@ -149,7 +151,9 @@ export async function lastCommand(jsonMode = false): Promise<void> {
     };
   });
 
-  console.log(chalk.dim('\n  Top 10:\n'));
+  if (!compact) {
+    console.log(chalk.dim('\n  Top 10:\n'));
+  }
 
   // Podium graphic for top 3
   if (tableResults.length >= 3) {
@@ -162,6 +166,6 @@ export async function lastCommand(jsonMode = false): Promise<void> {
     if (graphic) console.log(graphic);
   }
 
-  console.log(createResultsTable(tableResults));
+  console.log(createResultsTable(tableResults, compact));
   printTrailingBlank();
 }
