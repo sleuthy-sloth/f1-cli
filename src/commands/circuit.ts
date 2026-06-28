@@ -6,6 +6,7 @@ import { CIRCUITS } from '../data/circuits.js';
 import type { Circuit } from '../data/circuits.js';
 
 const F1_RED = '#e10600';
+const TRACK_WHITE = '#e8e8e8';
 
 /**
  * Case-insensitive partial match against name, fullName, or gpName.
@@ -45,30 +46,71 @@ const DRS_CHARS = new Set('═║╔╗╚╝╠╣╦╩╬');
 /**
  * Normal track box-drawing characters -- rendered in white.
  */
-const TRACK_CHARS = new Set('─│┌┐└┘├┤┬┴┼╱╲◄►');
+const TRACK_CHARS = new Set('─│┌┐└┘├┤┬┴┼╱╲');
+
+/**
+ * Pit lane characters -- rendered in blue.
+ */
+const PIT_CHARS = new Set('╻╹╽╿┊┆');
+
+/**
+ * Elevation characters -- rendered in yellow.
+ */
+const ELEVATION_CHARS = new Set('↑↓↗↘');
 
 /**
  * Render a single map line, applying character-based colors.
- * Multi-character labels are handled first, then individual chars.
+ * Multi-character label patterns are handled first, then individual chars.
  */
-function renderMapLine(line: string): string {
+function renderMapLine(line: string, isPitLine: boolean = false): string {
   // Multi-character label patterns (applied before single-char processing)
   let result = line
+    // Famous corner names / track sections in magenta
+    .replace(
+      /MAGGOTTS|BECKETTS|CHAPEL|EAU ROUGE|RAIDILLON|PARABOLICA|ASCARI|COPSE|STOWE|CLUB|PISCINE|MIRABEAU|PORTIER|CASINO|TUNNEL|NOUVELLE|TABAC|SWIMMING POOL|RASCASSE|CHICANE|FORO SOL|STADIUM|HUGERHOLTZ|CASTLE|BANKING/gi,
+      (m) => chalk.magenta(m)
+    )
+    // S/F label in bold red
     .replace(/S\/F/g, chalk.hex(F1_RED).bold('S/F'))
-    .replace(/\bDRS\b/g, chalk.cyan('DRS'))
+    // DRS text label in cyan (standalone word)
+    .replace(/\bDRS\b(?![\wΑ-Ωα-ω])/g, chalk.cyan('DRS'))
+    // DRS detection marker
+    .replace(/DRS DETECT/g, chalk.cyan('DRS DETECT'))
+    // Sector markers S1/S2/S3 in yellow
     .replace(/\bS([123])\b/g, (_m, n) => chalk.yellow(`S${n}`))
+    // Corner numbers T1-T99 in yellow
+    .replace(/\bT(\d{1,2})\b/g, (_m, n) => chalk.yellow(`T${n}`))
+    // Corner numbers with letter suffix (T1-T50A)
+    .replace(/\bT(\d{1,2}[A-Z])\b/g, (_m, n) => chalk.yellow(`T${n}`))
+    // Pit labels in blue
     .replace(/\(PIT\)/g, chalk.blue('(PIT)'))
-    .replace(/\[PIT\]/g, chalk.blue('[PIT]'));
+    .replace(/\[PIT\]/g, chalk.blue('[PIT]'))
+    .replace(/PIT IN/g, chalk.blue('PIT IN'))
+    .replace(/PIT OUT/g, chalk.blue('PIT OUT'))
+    .replace(/PIT/g, chalk.blue('PIT'))
+    // Grandstand markers in dim
+    .replace(/\(G\)/g, chalk.dim('(G)'));
 
   // Single-character color mapping
   result = result
     .split('')
     .map((c) => {
       if (DRS_CHARS.has(c)) return chalk.cyan(c);
-      if (TRACK_CHARS.has(c)) return chalk.white(c);
+      if (PIT_CHARS.has(c)) return chalk.blue(c);
+      if (ELEVATION_CHARS.has(c)) return chalk.yellow(c);
+      // Intensity gradient chars
+      if (c === '▓') return chalk.hex(F1_RED)(c);
+      if (c === '▒') return chalk.yellow(c);
+      if (c === '░') return chalk.green(c);
+      // Track chars
+      if (isPitLine) {
+        if (TRACK_CHARS.has(c)) return chalk.blue(c);
+      } else {
+        if (TRACK_CHARS.has(c)) return chalk.hex(TRACK_WHITE)(c);
+      }
       if (c === '=') return chalk.cyan(c);
-      if (c === '+' || c === '-' || c === '|') return chalk.white(c);
-      if (c === '/' || c === '\\') return chalk.white(c);
+      if (c === '+' || c === '-' || c === '|') return chalk.hex(TRACK_WHITE)(c);
+      if (c === '/' || c === '\\') return chalk.hex(TRACK_WHITE)(c);
       return c; // spaces, letter labels, numbers pass through
     })
     .join('');
@@ -77,29 +119,80 @@ function renderMapLine(line: string): string {
 }
 
 /**
+ * Render the compass indicator showing track direction.
+ */
+function compass(direction: 'Clockwise' | 'Anti-clockwise'): string {
+  const n = chalk.white.bold('N');
+  const e = chalk.white.bold('E');
+  const s = chalk.white.bold('S');
+  const w = chalk.white.bold('W');
+  const dirArrow = direction === 'Clockwise' ? '↻' : '↺';
+  const dirLabel = direction === 'Clockwise' ? 'CW' : 'ACW';
+  return chalk.dim(`[${n}─${e}─${s}─${w}] ${chalk.cyan(dirArrow)}${chalk.dim(dirLabel)}`);
+}
+
+/**
  * Render the Legend (color key) shown below every track map.
  */
 function legend(): string {
-  const hr = chalk.dim('─'.repeat(40));
+  const hr = chalk.dim('─'.repeat(44));
   const key: string[] = [
     '',
     `${hr}`,
-    `  ${chalk.white('──')} Normal track     ${chalk.cyan('══')} DRS zone`,
-    `  ${chalk.hex(F1_RED).bold('S/F')} Start/finish    ${chalk.yellow('S1')} ${chalk.yellow('S2')} ${chalk.yellow('S3')} Sector markers`,
+    `  ${chalk.hex(TRACK_WHITE)('──')} Normal track     ${chalk.cyan('══')} DRS zone` +
+      `     ${chalk.blue('╻╹')} Pit lane`,
+    `  ${chalk.hex(F1_RED).bold('S/F')} Start/finish    ${chalk.yellow('T1')} Corners` +
+      `      ${chalk.yellow('↑↓')} Elevation`,
+    `  ${chalk.yellow('S1 S2 S3')} Sector marks   ${chalk.magenta('MAGENTA')} Famous sections` +
+      `  ${chalk.red('▓')}${chalk.yellow('▒')}${chalk.green('░')} Speed gradient`,
     `${hr}`,
   ];
   return key.join('\n');
 }
 
 /**
- * Render the full track map for a circuit.
+ * Render the full track map for a circuit, with border and header.
  */
 function renderMap(circuit: Circuit): string {
+  const mapWidth = Math.max(...circuit.map.map((l) => l.length));
+  const border = chalk.dim('═'.repeat(mapWidth + 4));
+
+  // Header line with circuit name and compass
+  const compassStr = compass(circuit.direction);
+  const headerGap = mapWidth + 2 - compassStr.length - circuit.fullName.length;
+  const gap = headerGap > 0 ? ' '.repeat(headerGap) : ' ';
+  const header = `  ${chalk.dim('╔')}${border}${chalk.dim('╗')}`;
+  const titleLine = `  ${chalk.dim('║')}  ${chalk.bold.cyan(circuit.fullName)}${gap}${compassStr}  ${chalk.dim('║')}`;
+  const gpLine = `  ${chalk.dim('║')}  ${chalk.white(circuit.gpName)}${chalk.dim(
+    ' -- '
+  )}${circuit.location}${' '.repeat(Math.max(0, mapWidth - circuit.gpName.length - circuit.location.length - 5))}  ${chalk.dim('║')}`;
+  const divider = `  ${chalk.dim('╠')}${border}${chalk.dim('╣')}`;
+  const footer = `  ${chalk.dim('╚')}${border}${chalk.dim('╝')}`;
+
+  // Map lines with side borders
   const mapLines = circuit.map
-    .map((line) => `  ${renderMapLine(line)}`)
+    .map((line) => {
+      const padded = line.padEnd(mapWidth);
+      const rendered = renderMapLine(padded);
+      return `  ${chalk.dim('║')} ${rendered} ${chalk.dim('║')}`;
+    })
     .join('\n');
 
-  return mapLines;
+  // Stats line
+  const stats = `  ${chalk.dim('║')}  ${chalk.dim(
+    `${circuit.lengthKm} km \u00B7 ${circuit.turns} turns \u00B7 ${circuit.direction} \u00B7 First GP ${circuit.firstHeld}`
+  )}${' '.repeat(Math.max(0, mapWidth - 38))}  ${chalk.dim('║')}`;
+
+  return [
+    header,
+    titleLine,
+    gpLine,
+    divider,
+    mapLines,
+    divider,
+    stats,
+    footer,
+  ].join('\n');
 }
 
 export async function circuitCommand(name?: string, jsonMode = false): Promise<void> {
@@ -225,25 +318,8 @@ export async function circuitCommand(name?: string, jsonMode = false): Promise<v
     return;
   }
 
-  // Print the circuit details
+  // Print the circuit details + track map
   console.log();
-  console.log(chalk.bold.cyan(`  ${circuit.fullName}`));
-  console.log(
-    chalk.white(`  ${circuit.gpName}`) +
-      chalk.dim(` -- ${circuit.location}\n`)
-  );
-
-  const labelWidth = 12;
-  const pad = (s: string) => s.padEnd(labelWidth);
-
-  console.log(`  ${chalk.dim(pad('Length:'))}  ${circuit.lengthKm} km`);
-  console.log(`  ${chalk.dim(pad('Turns:'))}  ${circuit.turns}`);
-  console.log(`  ${chalk.dim(pad('Direction:'))}  ${circuit.direction}`);
-  console.log(`  ${chalk.dim(pad('First GP:'))}  ${circuit.firstHeld}`);
-  console.log(`  ${chalk.dim(pad('Lap Record:'))}  ${circuit.lapRecord}`);
-  console.log();
-
-  // Print the ASCII track map
   console.log(renderMap(circuit));
   console.log(legend());
   printTrailingBlank();
