@@ -1,6 +1,6 @@
 {
   "name": "@sleuthy-sloth/f1-cli",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Formula 1 data in your terminal - schedule, results, standings, driver info, circuit maps, and live session tracking",
   "type": "module",
   "main": "./dist/bin/cli.js",
