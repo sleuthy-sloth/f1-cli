@@ -324,12 +324,28 @@ async function handleLastRace(text: string, _jsonMode: boolean): Promise<NluResu
 async function handleNextRace(text: string, _jsonMode: boolean): Promise<NluResult | null> {
   // Match: "when is the next race", "next race", "upcoming race", "what's happening this weekend"
   if (
-    !/(?:next race|upcoming race|this weekend|next grand prix|when.*race|f1 today|happening)/i.test(text)
+    !/(?:next race|upcoming race|this weekend|next grand prix|when.*race|f1 today|happening|weekend schedule|race weekend|what.*wknd)/i.test(text)
   ) {
     return null;
   }
 
   return { command: 'today', args: [], handled: false };
+}
+
+async function handleWeekendSchedule(text: string, _jsonMode: boolean): Promise<NluResult | null> {
+  // Match: "show me the weekend", "weekend breakdown", "weekend timeline", "race weekend schedule"
+  if (
+    !/(?:weekend|wknd|timeline|breakdown|schedule.*race|race.*schedule|session.*time|when.*session)/i.test(text)
+  ) {
+    return null;
+  }
+
+  // If asking about sessions or weekend specifically, use weekend command
+  if (/\b(this weekend|next.*weekend|weekend.*schedule|session.*time|when.*session|wknd)\b/i.test(text)) {
+    return { command: 'weekend', args: [], handled: false };
+  }
+
+  return null;
 }
 
 async function handleStandingsQuery(text: string, _jsonMode: boolean): Promise<NluResult | null> {
@@ -465,7 +481,12 @@ export async function parseNaturalLanguage(
     return handleNextRace(text, jsonMode);
   }
 
-  // 6. Championship standings / leader
+  // 6. Weekend schedule / timeline
+  if (await handleWeekendSchedule(text, jsonMode)) {
+    return handleWeekendSchedule(text, jsonMode);
+  }
+
+  // 7. Championship standings / leader
   if (await handleStandingsQuery(text, jsonMode)) {
     return handleStandingsQuery(text, jsonMode);
   }

@@ -9,6 +9,7 @@ import { lastCommand } from '../src/commands/last.js';
 import { todayCommand } from '../src/commands/today.js';
 import { driverCommand } from '../src/commands/driver.js';
 import { circuitCommand } from '../src/commands/circuit.js';
+import { weekendCommand } from '../src/commands/weekend.js';
 import { VERSION } from '../src/version.js';
 import { startRepl } from '../src/repl.js';
 
@@ -89,6 +90,14 @@ program
   .description('Show ASCII track map and details for a circuit')
   .action((name?: string) => {
     circuitCommand(name, jsonMode).catch(handleError);
+  });
+
+program
+  .command('weekend')
+  .alias('wknd')
+  .description('Show a visual timeline and breakdown of the current or next race weekend')
+  .action(() => {
+    weekendCommand(jsonMode).catch(handleError);
   });
 
 // Interactive REPL mode

@@ -10,6 +10,7 @@ import { lastCommand } from './commands/last.js';
 import { todayCommand } from './commands/today.js';
 import { driverCommand } from './commands/driver.js';
 import { circuitCommand } from './commands/circuit.js';
+import { weekendCommand } from './commands/weekend.js';
 
 const RED = '#e10600';
 const CHECKERBOARD =
@@ -96,6 +97,14 @@ const COMMANDS: CommandDef[] = [
       const name = args.join(' ') || undefined;
       return circuitCommand(name, json);
     },
+  },
+  {
+    name: 'weekend',
+    aliases: ['wknd', 'w'],
+    args: '',
+    description: 'Visual timeline of the current or next race weekend',
+    usage: '/weekend',
+    run: (_args, json) => weekendCommand(json),
   },
 ];
 
