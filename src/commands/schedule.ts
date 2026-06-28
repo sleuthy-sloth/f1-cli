@@ -1,19 +1,22 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import { createScheduleTable, formatSessionTime } from '../utils/formatting.js';
 import { printTrailingBlank } from '../utils/display.js';
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function scheduleCommand(jsonMode = false): Promise<void> {
+export async function scheduleCommand(jsonMode = false, year?: number, compact = false, prefetchedData?: PrefetchedData): Promise<void> {
   const now = new Date();
-  const currentYear = now.getFullYear();
+  const currentYear = year ?? now.getFullYear();
 
-  const [meetings, allSessions] = await Spinner.with('Fetching schedule', () =>
-    Promise.all([
-      api.getMeetings({ year: currentYear }),
-      api.getSessions({ year: currentYear }),
-    ])
-  );
+  const [meetings, allSessions] = prefetchedData
+    ? [prefetchedData.meetings, prefetchedData.sessions]
+    : await Spinner.with('Fetching schedule', () =>
+        Promise.all([
+          api.getMeetings({ year: currentYear }),
+          api.getSessions({ year: currentYear }),
+        ])
+      );
 
   // Sort meetings chronologically so we can derive real round numbers
   const activeMeetings = meetings
@@ -21,10 +24,14 @@ export async function scheduleCommand(jsonMode = false): Promise<void> {
     .sort((a, b) => new Date(a.date_start).getTime() - new Date(b.date_start).getTime());
 
   // Find upcoming meetings (date_end is in the future or today)
-  const upcoming = activeMeetings.filter((m) => new Date(m.date_end) > now);
+  // If a specific year is requested that isn't the current year, show all races
+  const isCurrentYear = currentYear === now.getFullYear();
+  const upcoming = isCurrentYear
+    ? activeMeetings.filter((m) => new Date(m.date_end) > now)
+    : activeMeetings;
 
-  // If we have fewer than 5 upcoming, include the next one from next year
-  const displayMeetings = upcoming.slice(0, 5);
+  // If we have fewer than 5 upcoming (current year only), pad with next races
+  const displayMeetings = isCurrentYear ? upcoming.slice(0, 5) : upcoming.slice(0, 5);
 
   // For each meeting, find the Qualifying and Race sessions
   // Round is derived from the meeting's 1-indexed position in the full year's list
@@ -90,6 +97,6 @@ export async function scheduleCommand(jsonMode = false): Promise<void> {
     return;
   }
 
-  console.log(createScheduleTable(races));
+  console.log(createScheduleTable(races, compact));
   printTrailingBlank();
 }

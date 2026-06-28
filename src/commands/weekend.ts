@@ -1,4 +1,5 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import { Spinner } from '../utils/spinner.js';
 import { printTrailingBlank } from '../utils/display.js';
 import { formatSessionTime, colorSessionType, sessionTypeEmoji } from '../utils/formatting.js';
@@ -83,13 +84,12 @@ function formatMin(mins: number): string {
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
-export async function weekendCommand(jsonMode = false): Promise<void> {
+export async function weekendCommand(year?: number, jsonMode = false, compact = false, prefetchedData?: PrefetchedData): Promise<void> {
   const now = new Date();
-  const currentYear = now.getFullYear();
+  const currentYear = year ?? now.getFullYear();
 
-  const meetings = await Spinner.with('Fetching meetings', () =>
-    api.getMeetings({ year: currentYear })
-  );
+  const meetings = prefetchedData?.meetings
+    ?? await Spinner.with('Fetching meetings', () => api.getMeetings({ year: currentYear }));
   const activeMeetings = meetings.filter((m) => !m.is_cancelled);
 
   // Find the current weekend (happening now) or next upcoming
@@ -127,9 +127,8 @@ export async function weekendCommand(jsonMode = false): Promise<void> {
     return;
   }
 
-  const sessions = await Spinner.with('Fetching sessions', () =>
-    api.getSessions({ meeting_key: target!.meeting_key })
-  );
+  const sessions = prefetchedData?.sessions?.filter((s) => s.meeting_key === target!.meeting_key)
+    ?? await Spinner.with('Fetching sessions', () => api.getSessions({ meeting_key: target!.meeting_key }));
 
   if (jsonMode) {
     console.log(JSON.stringify({
@@ -151,6 +150,18 @@ export async function weekendCommand(jsonMode = false): Promise<void> {
   const weekStart = new Date(target.date_start).getTime();
   const weekEnd = new Date(target.date_end).getTime();
   const totalMin = (weekEnd - weekStart) / 60000;
+
+  if (compact) {
+    // Compact: just list sessions
+    for (let i = 0; i < sessions.length; i++) {
+      const s = sessions[i];
+      const emoji = sessionTypeEmoji(s.session_type);
+      const timeStr = formatSessionTime(s.date_start, s.gmt_offset);
+      console.log(`  ${emoji} ${timeStr}  ${s.session_type}`);
+    }
+    printTrailingBlank();
+    return;
+  }
 
   console.log(chalk.bold.cyan(`\n  ${target.meeting_name}\n`));
   console.log(`  ${chalk.dim(target.location)}`);

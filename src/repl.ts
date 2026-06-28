@@ -3,6 +3,8 @@ import { stdin, stdout } from 'node:process';
 import chalk from 'chalk';
 import { VERSION } from './version.js';
 import { parseNaturalLanguage } from './nlu.js';
+import { prefetchYearData } from './api/client.js';
+import type { PrefetchedData } from './api/client.js';
 import { scheduleCommand } from './commands/schedule.js';
 import { resultsCommand } from './commands/results.js';
 import { standingsCommand } from './commands/standings.js';
@@ -29,7 +31,7 @@ interface CommandDef {
   args: string;
   description: string;
   usage: string;
-  run: (args: string[], jsonMode: boolean) => Promise<void>;
+  run: (args: string[], jsonMode: boolean, prefetchedData?: PrefetchedData) => Promise<void>;
 }
 
 const COMMANDS: CommandDef[] = [
@@ -39,7 +41,7 @@ const COMMANDS: CommandDef[] = [
     args: '',
     description: 'Show the next 5 upcoming races with session times',
     usage: '/schedule',
-    run: (_args, json) => scheduleCommand(json),
+    run: (_args, json, prefetchedData) => scheduleCommand(json, undefined, false, prefetchedData),
   },
   {
     name: 'standings',
@@ -47,9 +49,9 @@ const COMMANDS: CommandDef[] = [
     args: '[year]',
     description: 'Show driver and constructor championship standings',
     usage: '/standings [year]',
-    run: (args, json) => {
+    run: (args, json, prefetchedData) => {
       const year = args[0] ? parseInt(args[0], 10) : undefined;
-      return standingsCommand(year, json);
+      return standingsCommand(year, json, false, prefetchedData);
     },
   },
   {
@@ -58,10 +60,10 @@ const COMMANDS: CommandDef[] = [
     args: '[year] [round]',
     description: 'Show race results (defaults to most recent)',
     usage: '/results [year] [round]',
-    run: (args, json) => {
+    run: (args, json, prefetchedData) => {
       const year = args[0] ? parseInt(args[0], 10) : undefined;
       const round = args[1] ? parseInt(args[1], 10) : undefined;
-      return resultsCommand(year, round, json);
+      return resultsCommand(year, round, json, false, prefetchedData);
     },
   },
   {
@@ -70,7 +72,7 @@ const COMMANDS: CommandDef[] = [
     args: '',
     description: 'Quick summary of the most recent completed race',
     usage: '/last',
-    run: (_args, json) => lastCommand(json),
+    run: (_args, json, prefetchedData) => lastCommand(json, undefined, false, prefetchedData),
   },
   {
     name: 'today',
@@ -78,7 +80,7 @@ const COMMANDS: CommandDef[] = [
     args: '',
     description: 'Show what is happening this race weekend',
     usage: '/today',
-    run: (_args, json) => todayCommand(json),
+    run: (_args, json, prefetchedData) => todayCommand(json, false, false, prefetchedData),
   },
   {
     name: 'driver',
@@ -108,9 +110,9 @@ const COMMANDS: CommandDef[] = [
     args: '[year]',
     description: 'Visual timeline of the current or next race weekend',
     usage: '/weekend [year]',
-    run: (args, json) => {
+    run: (args, json, prefetchedData) => {
       const year = args[0] ? parseInt(args[0], 10) : undefined;
-      return weekendCommand(year, json);
+      return weekendCommand(year, json, false, prefetchedData);
     },
   },
   {
@@ -242,6 +244,16 @@ export async function startRepl(): Promise<void> {
   printBanner();
   printHelp();
 
+  // Prefetch data for the current year to avoid redundant API calls across commands
+  const currentYear = new Date().getFullYear();
+  let prefetchedData: PrefetchedData | undefined;
+  try {
+    prefetchedData = await prefetchYearData(currentYear);
+    console.log(chalk.dim(`  Prefetched ${prefetchedData.meetings.length} meetings and ${prefetchedData.sessions.length} sessions for ${currentYear}.\n`));
+  } catch {
+    // Prefetch failed -- commands will fall back to individual API calls
+  }
+
   const rl = readline.createInterface({
     input: stdin,
     output: stdout,
@@ -269,7 +281,7 @@ export async function startRepl(): Promise<void> {
         // It's a command alias typed without / -- run it
         const jsonMode = parts.includes('--json');
         const cleanArgs = parts.slice(1).filter((a) => a !== '--json');
-        await runCommand([cmd.name, ...cleanArgs], rl, jsonMode);
+        await runCommand([cmd.name, ...cleanArgs], rl, jsonMode, prefetchedData);
       } else {
         // Try natural language parsing before falling back to driver search
         const nluResult = await parseNaturalLanguage(line, false);
@@ -278,11 +290,11 @@ export async function startRepl(): Promise<void> {
             // NLU handler already produced output
           } else if (nluResult.command) {
             // NLU mapped to a command -- run it
-            await runCommand([nluResult.command, ...nluResult.args], rl, false);
+            await runCommand([nluResult.command, ...nluResult.args], rl, false, prefetchedData);
           }
         } else {
           // No NLU match -- treat as driver search
-          await runCommand(['driver', line], rl);
+          await runCommand(['driver', line], rl, false, prefetchedData);
         }
       }
       rl.prompt();
@@ -321,7 +333,7 @@ export async function startRepl(): Promise<void> {
     // F1 data commands
     const cmd = findCommand(cmdName);
     if (cmd) {
-      await runCommand([cmd.name, ...cleanArgs], rl, jsonMode);
+      await runCommand([cmd.name, ...cleanArgs], rl, jsonMode, prefetchedData);
       rl.prompt();
       return;
     }
@@ -340,7 +352,8 @@ export async function startRepl(): Promise<void> {
 async function runCommand(
   parts: string[],
   _rl: readline.Interface,
-  jsonMode = false
+  jsonMode = false,
+  prefetchedData?: PrefetchedData
 ): Promise<void> {
   const cmdName = parts[0];
   const args = parts.slice(1);
@@ -348,7 +361,7 @@ async function runCommand(
   try {
     const cmd = findCommand(cmdName);
     if (cmd) {
-      await cmd.run(args, jsonMode);
+      await cmd.run(args, jsonMode, prefetchedData);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

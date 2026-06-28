@@ -1,4 +1,5 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import {
   formatSessionTime,
   createSessionTable,
@@ -9,13 +10,17 @@ import {
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function todayCommand(jsonMode = false): Promise<void> {
+const WATCH_INTERVAL_MS = 15_000;
+
+/**
+ * Render the today output. Returns true if the watch loop should continue.
+ */
+async function renderToday(jsonMode = false, compact = false, prefetchedData?: PrefetchedData): Promise<boolean> {
   const now = new Date();
   const currentYear = now.getFullYear();
 
-  const meetings = await Spinner.with('Fetching sessions', () =>
-    api.getMeetings({ year: currentYear })
-  );
+  const meetings = prefetchedData?.meetings
+    ?? await Spinner.with('Fetching sessions', () => api.getMeetings({ year: currentYear }));
   const activeMeetings = meetings.filter((m) => !m.is_cancelled);
 
   // Find meetings happening this weekend (date_start to date_end overlaps with now)
@@ -50,9 +55,11 @@ export async function todayCommand(jsonMode = false): Promise<void> {
               gmtOffset: nextUp.gmt_offset,
             },
           }, null, 2));
-          return;
+          return false;
         }
-        console.log(chalk.dim('\n  No F1 action this weekend.'));
+        if (!compact) {
+          console.log(chalk.dim('\n  No F1 action this weekend.'));
+        }
         console.log(chalk.cyan(`\n  Next race: ${nextUp.meeting_name}`));
         console.log(`  ${nextDate} -- ${nextUp.location}\n`);
       } else {
@@ -60,16 +67,15 @@ export async function todayCommand(jsonMode = false): Promise<void> {
           console.log(JSON.stringify({ status: 'no-upcoming' }, null, 2));
         }
       }
-      return;
+      return false;
     }
 
     const next = nextMeetings[0];
     const nextDate = formatSessionTime(next.date_start, next.gmt_offset);
 
     // Show all sessions for the next weekend
-    const sessions = await Spinner.with('Fetching sessions', () =>
-      api.getSessions({ meeting_key: next.meeting_key })
-    );
+    const sessions = prefetchedData?.sessions?.filter((s) => s.meeting_key === next.meeting_key)
+      ?? await Spinner.with('Fetching sessions', () => api.getSessions({ meeting_key: next.meeting_key }));
 
     const sessionRows = sessions.map((s) => {
       const countdown = formatCountdown(new Date(s.date_start), now);
@@ -96,21 +102,22 @@ export async function todayCommand(jsonMode = false): Promise<void> {
           gmtOffset: s.gmt_offset,
         })),
       }, null, 2));
-      return;
+      return false;
     }
 
-    console.log(chalk.cyan(`\n  Next Up: ${next.meeting_name}`));
-    console.log(`  ${nextDate} -- ${next.location}\n`);
-    console.log(createSessionTable(sessionRows));
+    if (!compact) {
+      console.log(chalk.cyan(`\n  Next Up: ${next.meeting_name}`));
+      console.log(`  ${nextDate} -- ${next.location}\n`);
+    }
+    console.log(createSessionTable(sessionRows, compact));
     console.log();
-    return;
+    return false;
   }
 
   // We're in a race weekend
   const weekend = weekendMeetings[0];
-  const sessions = await Spinner.with('Fetching sessions', () =>
-    api.getSessions({ meeting_key: weekend.meeting_key })
-  );
+  const sessions = prefetchedData?.sessions?.filter((s) => s.meeting_key === weekend.meeting_key)
+    ?? await Spinner.with('Fetching sessions', () => api.getSessions({ meeting_key: weekend.meeting_key }));
 
   // Get all upcoming sessions within this weekend (today or future)
   const upcomingSessions = sessions.filter((s) => {
@@ -128,21 +135,27 @@ export async function todayCommand(jsonMode = false): Promise<void> {
         meeting: weekend.meeting_name,
         location: weekend.location,
       }, null, 2));
-      return;
+      return false;
     }
-    console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} -- ${weekend.location}`));
+    if (!compact) {
+      console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} -- ${weekend.location}`));
+    }
     // Show summary of completed sessions
     const raceSession = sessions.find((s) => s.session_type === 'Race');
     if (raceSession) {
       const raceEnd = new Date(raceSession.date_end);
       if (now > raceEnd) {
-        console.log(chalk.green('\n  Race completed!'));
-        console.log('  Visit "f1 last" or "f1 results" for full results.\n');
-        return;
+        if (!compact) {
+          console.log(chalk.green('\n  Race completed!'));
+          console.log('  Visit "f1 last" or "f1 results" for full results.\n');
+        }
+        return false;
       }
     }
-    console.log(chalk.yellow("\n  All of today's sessions have ended.\n"));
-    return;
+    if (!compact) {
+      console.log(chalk.yellow("\n  All of today's sessions have ended.\n"));
+    }
+    return false;
   }
 
   if (jsonMode) {
@@ -159,17 +172,19 @@ export async function todayCommand(jsonMode = false): Promise<void> {
         live: new Date(s.date_start) <= now && new Date(s.date_end) > now,
       })),
     }, null, 2));
-    return;
+    return false;
   }
 
-  console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} -- ${weekend.location}\n`));
+  if (!compact) {
+    console.log(chalk.cyan(`\n  This Weekend: ${weekend.meeting_name} -- ${weekend.location}\n`));
+  }
 
   // Check for a live race session to show lap progress
   let lapProgressBar = '';
   const liveRaceSession = upcomingSessions.find(
     (s) => s.session_type === 'Race' && new Date(s.date_start) <= now && new Date(s.date_end) > now
   );
-  if (liveRaceSession) {
+  if (liveRaceSession && !compact) {
     try {
       const laps = await api.getLaps({ session_key: liveRaceSession.session_key });
       if (laps.length > 0) {
@@ -209,6 +224,53 @@ export async function todayCommand(jsonMode = false): Promise<void> {
   if (lapProgressBar) {
     console.log(lapProgressBar);
   }
-  console.log(createSessionTable(sessionRows));
-  console.log();
+  console.log(createSessionTable(sessionRows, compact));
+  if (!compact) console.log();
+
+  // Keep watching if there are still upcoming sessions
+  return upcomingSessions.length > 0;
+}
+
+export async function todayCommand(jsonMode = false, watch = false, compact = false, prefetchedData?: PrefetchedData): Promise<void> {
+  if (!watch) {
+    await renderToday(jsonMode, compact, prefetchedData);
+    return;
+  }
+
+  // Watch mode: render immediately, then re-render every 15s
+  let running = true;
+  const handleSignal = () => {
+    running = false;
+  };
+  process.on('SIGINT', handleSignal);
+  process.on('SIGTERM', handleSignal);
+
+  while (running) {
+    // Clear screen before re-render (except first time)
+    if (process.stdout.isTTY) {
+      process.stdout.write('\x1b[2J\x1b[3J\x1b[H');
+    }
+
+    const shouldContinue = await renderToday(jsonMode, compact, prefetchedData);
+    if (!shouldContinue) {
+      break;
+    }
+
+    // Wait for the interval, but allow early exit on signal
+    await new Promise<void>((resolve) => {
+      const timer = setTimeout(() => {
+        resolve();
+      }, WATCH_INTERVAL_MS);
+
+      // Allow SIGINT to break the wait
+      process.on('SIGINT', () => {
+        clearTimeout(timer);
+        running = false;
+        resolve();
+      });
+    });
+  }
+
+  process.removeListener('SIGINT', handleSignal);
+  process.removeListener('SIGTERM', handleSignal);
 }

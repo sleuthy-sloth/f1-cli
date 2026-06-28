@@ -1,20 +1,23 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import { createStandingsTable } from '../utils/formatting.js';
 import { printTrailingBlank } from '../utils/display.js';
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function standingsCommand(year?: number, jsonMode = false): Promise<void> {
+export async function standingsCommand(year?: number, jsonMode = false, compact = false, prefetchedData?: PrefetchedData): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
   // Fetch all meetings and all sessions for the year in one call each
-  const [meetings, allSessions] = await Spinner.with('Fetching standings', () =>
-    Promise.all([
-      api.getMeetings({ year: targetYear }),
-      api.getSessions({ year: targetYear }),
-    ])
-  );
+  const [meetings, allSessions] = prefetchedData
+    ? [prefetchedData.meetings, prefetchedData.sessions]
+    : await Spinner.with('Fetching standings', () =>
+        Promise.all([
+          api.getMeetings({ year: targetYear }),
+          api.getSessions({ year: targetYear }),
+        ])
+      );
 
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 
@@ -116,8 +119,10 @@ export async function standingsCommand(year?: number, jsonMode = false): Promise
     return;
   }
 
-  console.log(chalk.bold(`\n  ${targetYear} Formula 1 Championship Standings\n`));
-  console.log(createStandingsTable(driverEntries, 'Drivers Championship'));
-  console.log(createStandingsTable(teamEntries, 'Constructors Championship'));
+  if (!compact) {
+    console.log(chalk.bold(`\n  ${targetYear} Formula 1 Championship Standings\n`));
+  }
+  console.log(createStandingsTable(driverEntries, 'Drivers Championship', compact));
+  console.log(createStandingsTable(teamEntries, 'Constructors Championship', compact));
   printTrailingBlank();
 }

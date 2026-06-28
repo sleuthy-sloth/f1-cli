@@ -1,4 +1,5 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import {
   createResultsTable,
   createPodiumGraphic,
@@ -13,17 +14,20 @@ export async function resultsCommand(
   year?: number,
   round?: number,
   jsonMode = false,
-  compact = false
+  compact = false,
+  prefetchedData?: PrefetchedData
 ): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
-  const [meetings, allSessions] = await Spinner.with('Fetching race data', () =>
-    Promise.all([
-      api.getMeetings({ year: targetYear }),
-      api.getSessions({ year: targetYear }),
-    ])
-  );
+  const [meetings, allSessions] = prefetchedData
+    ? [prefetchedData.meetings, prefetchedData.sessions]
+    : await Spinner.with('Fetching race data', () =>
+        Promise.all([
+          api.getMeetings({ year: targetYear }),
+          api.getSessions({ year: targetYear }),
+        ])
+      );
 
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 

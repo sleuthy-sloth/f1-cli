@@ -46,19 +46,43 @@ async function fetchJson<T>(url: string, cacheKey: string, cacheTtlMs?: number):
   const cached = getCached<T>(cacheKey);
   if (cached !== null) return cached;
 
-  await rateLimit();
+  const maxRetries = 3;
+  let lastError: Error | null = null;
 
-  const response = await fetch(url);
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error('No data found for the requested parameters.');
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    await rateLimit();
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        if (response.status === 404) {
+          throw new Error('No data found for the requested parameters.');
+        }
+        // Retry on 429 (rate limit) and 503 (service unavailable)
+        if (response.status === 429 || response.status === 503) {
+          lastError = new Error(`API request failed: ${response.status} ${response.statusText}`);
+          const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          continue;
+        }
+        throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      }
+
+      const data = (await response.json()) as T;
+      setCache(cacheKey, data, cacheTtlMs);
+      return data;
+    } catch (err) {
+      // Don't retry on "No data found" or client errors (4xx except 429/503)
+      if (err instanceof Error && err.message.includes('No data found')) throw err;
+      if (err instanceof Error && err.message.includes('API request failed')) throw err;
+      // Retry on network-level errors (fetch rejects or throws)
+      lastError = err instanceof Error ? err : new Error(String(err));
+      const backoffMs = Math.min(1000 * Math.pow(2, attempt), 5000);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
     }
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`);
   }
 
-  const data = (await response.json()) as T;
-  setCache(cacheKey, data, cacheTtlMs);
-  return data;
+  throw lastError ?? new Error('API request failed after retries');
 }
 
 // Build query string from params, skipping undefined values
@@ -159,6 +183,41 @@ export const api = {
     return fetchJson<import('./types.js').Lap[]>(url, url, 30_000);
   },
 };
+
+// Prefetched data cache (separate from TTL cache, used by REPL to share data across commands)
+export interface PrefetchedData {
+  meetings: import('./types.js').Meeting[];
+  sessions: import('./types.js').Session[];
+}
+
+const prefetchCache = new Map<number, PrefetchedData>();
+
+export async function prefetchYearData(year: number): Promise<PrefetchedData> {
+  const cached = prefetchCache.get(year);
+  if (cached) return cached;
+
+  const [meetings, sessions] = await Promise.all([
+    api.getMeetings({ year }),
+    api.getSessions({ year }),
+  ]);
+
+  const data: PrefetchedData = { meetings, sessions };
+  prefetchCache.set(year, data);
+  return data;
+}
+
+export function getPrefetchedMeetings(year: number): import('./types.js').Meeting[] | null {
+  return prefetchCache.get(year)?.meetings ?? null;
+}
+
+export function getPrefetchedSessions(year: number): import('./types.js').Session[] | null {
+  return prefetchCache.get(year)?.sessions ?? null;
+}
+
+// Clear prefetch cache (useful in testing)
+export function clearPrefetchCache(): void {
+  prefetchCache.clear();
+}
 
 // Clear cache (useful in testing)
 export function clearCache(): void {

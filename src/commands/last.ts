@@ -1,4 +1,5 @@
 import { api } from '../api/client.js';
+import type { PrefetchedData } from '../api/client.js';
 import {
   createResultsTable,
   createPodiumGraphic,
@@ -9,17 +10,19 @@ import { printTrailingBlank } from '../utils/display.js';
 import { Spinner } from '../utils/spinner.js';
 import chalk from 'chalk';
 
-export async function lastCommand(jsonMode = false, year?: number, compact = false): Promise<void> {
+export async function lastCommand(jsonMode = false, year?: number, compact = false, prefetchedData?: PrefetchedData): Promise<void> {
   const now = new Date();
   const targetYear = year ?? now.getFullYear();
 
   // Fetch all meetings and sessions for the year in one call each (no N+1)
-  const [meetings, allSessions] = await Spinner.with('Fetching race data', () =>
-    Promise.all([
-      api.getMeetings({ year: targetYear }),
-      api.getSessions({ year: targetYear }),
-    ])
-  );
+  const [meetings, allSessions] = prefetchedData
+    ? [prefetchedData.meetings, prefetchedData.sessions]
+    : await Spinner.with('Fetching race data', () =>
+        Promise.all([
+          api.getMeetings({ year: targetYear }),
+          api.getSessions({ year: targetYear }),
+        ])
+      );
 
   const raceMeetings = meetings.filter((m) => !m.is_cancelled);
 
