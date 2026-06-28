@@ -82,31 +82,36 @@ $ f1 standings
 ```
 
 ```
-$ f1 circuit suzuka
+$ f1 circuit spa-francorchamps
 
-  Suzuka International Racing Course
-  Japanese Grand Prix -- Suzuka, Japan
+╔════════════════════════════════════╗
+  ║  Circuit de Spa-Francorchamps [N─E─S─W] ↻CW  ║
+  ║  Belgian Grand Prix -- Spa-Francorchamps, Belgium  ║
+  ╠════════════════════════════════════╣
+  ║   ┌───────────────────────────┐  ║
+  ║   │  S/F                      │  ║
+  ║   │  T1 ↑                     │  ║
+  ║   │     ┌────────────────┐    │  ║
+  ║   │     │   EAU ROUGE    │    │  ║
+  ║   │     │   RAIDILLON  ╱ │    │  ║
+  ║   └─────┘    ↗        ╱  │    │  ║
+  ║            T3       ╱   │    │   ║
+  ║                ┌──────┐ │ T12│   ║
+  ║                │  DRS │ │    │   ║
+  ║                │  ════════┘    │ ║
+  ║                │ BLANCHIMONT  │  ║
+  ║                └────┘   ┌─────┘  ║
+  ║                     T14 │        ║
+  ║                    ┌────┘        ║
+  ╠════════════════════════════════════╣
+  ║  7.004 km · 19 turns · Clockwise · First GP 1925  ║
+  ╚════════════════════════════════════╝
 
-  Length:       5.807 km
-  Turns:        18
-  Direction:    Clockwise
-  First GP:     1987
-  Lap Record:   1:30.983 (Max Verstappen, 2023)
-
-    +------+        +----------+
-    |      |        |          |
-    | S/F  |   +----+    +--+  |
-    |      |   |         |  |  |
-    +---+  +---+         |  |  |
-        |                |  |  |
-        |   +------------+  |  |
-        |   |               |  |
-        |   |    +------+   |  |
-        |   |    |      |   |  |
-        +---+----+      +---+  |
-                       +------+
-                          |
-                     +----+
+────────────────────────────────────────────
+  ── Normal track     ══ DRS zone     ╻╹ Pit lane
+  S/F Start/finish    T1 Corners      ↑↓ Elevation
+  S1 S2 S3 Sector marks   MAGENTA Famous sections  ▓▒░ Speed gradient
+────────────────────────────────────────────
 ```
 
 ```
@@ -185,8 +190,11 @@ f1 driver         Search for a driver by name (case-insensitive). Shows
                   bio info, team, championship position, season points.
                   Team-colored name, flag emoji.
 
-f1 circuit        ASCII art track maps for all 23 F1 circuits. Shows
-                  circuit details -- length, turns, direction, lap record.
+f1 circuit        Detailed ASCII track maps for all 23 F1 circuits. Shows
+                  circuit details with compass rose, corner numbers (T1-Tn),
+                  famous section names (magenta), elevation arrows, DRS zones,
+                  pit lane markers, speed gradient indicators, and a color
+                  legend. Double-line border frames each map.
                   Matching works on short name, full name, or GP name.
 
 f1 next           Alias for f1 today.
@@ -274,7 +282,7 @@ Things this does differently:
 - **Table formatting.** Colored output with proper alignment, emoji, podium medals, and proportional bar charts -- not raw JSON.
 - **Team colors.** Driver names and standings bars use actual F1 team hex codes (Mercedes cyan, Ferrari red, McLaren orange, etc.).
 - **Country flag emojis.** Each driver's flag appears next to their name using IOC-to-ISO country code mapping (26 countries).
-- **ASCII track maps.** Hand-crafted map art for all 23 circuits, with S/F line highlighted in F1 red.
+- **ASCII track maps.** Detailed maps for all 23 circuits with corner numbers, famous section names (Eau Rouge, Maggots, Copse, etc.), elevation arrows, DRS zone markers, pit lane indicators, compass rose, speed gradient dots, and a color legend -- all in a decorative bordered frame.
 - **Caching.** API responses are cached for 30-60 seconds so repeated calls don't hammer the API.
 - **Rate limiting.** Built-in rate limiting keeps things polite to the free API.
 
