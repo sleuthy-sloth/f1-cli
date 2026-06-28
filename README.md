@@ -1,59 +1,64 @@
-# f1-cli
+# f1-cli -- Formula 1 in your terminal
 
-Formula 1 data in your terminal. Schedule, results, championship standings, and session times -- all from the command line.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Built on the [OpenF1 API](https://openf1.org/) (free, no auth required for historical data).
+Race results, championship standings, driver info, circuit maps, and session times -- all from the command line. No API keys, no sign-up, no browser.
 
-## Install
+Built on the [OpenF1 API](https://openf1.org/).
 
-### npm (global)
-
-```bash
-npm install -g f1-cli
-```
-
-### npm (no install, one-off)
-
-```bash
-npx f1-cli schedule
-```
-
-### Homebrew
-
-```bash
-brew tap sleuthy-sloth/homebrew-tap
-brew install f1-cli
-```
-
-### From source
-
-```bash
-git clone https://github.com/sleuthy-sloth/f1-cli.git
-cd f1-cli
-npm install
-npm run build
-npm link
-```
-
-## Quick start
+## Quick showoff
 
 ```
-$ f1 schedule
+$ f1 last
 
-──── Upcoming
-┌─────┬────────────────────────────┬──────────────────┬──────────────────┬────────────────────────┬────────────────────────┐
-│ #   │ Grand Prix                 │ Location         │ Circuit          │ Qualifying             │ Race                   │
-├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
-│ 10  │ Austrian Grand Prix        │ Spielberg        │ Spielberg        │ Sat, 27 Jun 2026, 16:… │ Sun, 28 Jun 2026, 15:… │
-├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
-│ 11  │ British Grand Prix         │ Silverstone      │ Silverstone      │ Fri, 3 Jul 2026, 16:30 │ Sat, 4 Jul 2026, 12:00 │
-├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
-│ 12  │ Belgian Grand Prix         │ Spa-Francorchamps│ Spa-Francorchamps│ Sat, 18 Jul 2026, 16:… │ Sun, 19 Jul 2026, 15:… │
-├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
-│ 13  │ Hungarian Grand Prix       │ Budapest         │ Hungaroring      │ Sat, 25 Jul 2026, 16:… │ Sun, 26 Jul 2026, 15:… │
-├─────┼────────────────────────────┼──────────────────┼──────────────────┼────────────────────────┼────────────────────────┤
-│ 14  │ Dutch Grand Prix           │ Zandvoort        │ Zandvoort        │ Fri, 21 Aug 2026, 16:… │ Sat, 22 Aug 2026, 12:… │
-└─────┴────────────────────────────┴──────────────────┴──────────────────┴────────────────────────┴────────────────────────┘
+  Last Race: Spanish Grand Prix
+
+  Winner: Kimi ANTONELLI (Mercedes)
+  Time:   1:32:45
+
+      1st
+      +----------+
+      | ANTONELLI |
+      +----------+
+    2nd      3rd
+  +----------+  +----------+
+  | HAMILTON  |  | RUSSELL   |
+  +----------+  +----------+
+
+  Top 10:
+  ──── Results
+  ┌─────┬──────────────────────┬────────────────┬──────┬───────────┬────────────┬───────┐
+  │ Pos │ Driver                │ Team           │ Laps │ Time      │ Gap        │ Pts   │
+  ├─────┼──────────────────────┼────────────────┼──────┼───────────┼────────────┼───────┤
+  │ 🥇 1 │ Kimi ANTONELLI        │ Mercedes       │ 66   │ 1:32:45   │ LEADER     │ 25    │
+  │ 🥈 2 │ Lewis HAMILTON        │ Mercedes       │ 66   │ 1:32:52   │ +7.2s      │ 18    │
+  │ 🥉 3 │ George RUSSELL        │ Mercedes       │ 66   │ 1:32:58   │ +13.4s     │ 15    │
+  │ 4    │ Charles LECLERC       │ Ferrari        │ 66   │ 1:33:12   │ +27.1s     │ 12    │
+  └─────┴──────────────────────┴────────────────┴──────┴───────────┴────────────┴───────┘
+```
+
+```
+$ f1 weekend
+
+  Spanish Grand Prix
+  Barcelona, Spain
+  Fri, 19 Jun 2026, 10:30 -- Sun, 21 Jun 2026, 18:00
+  Total duration: 2d 7h 30m
+
+  ██████████████████████████████████████████████████
+  ░░░░░░░░░░░░░░░░░░██████████░░░░░░░░░░░░░░░░░░░░░░
+  ░░░░░░░░░░░░███████████████████████████████░░░░░░░░
+  ░░░░░░░░████████████████████████████████████████████
+  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░██████░░░░
+
+  Legend: █ Race  ▓ Qualifying  ▒ Sprint  ░ Practice
+
+  Session Breakdown
+
+  🏁 Fri, 19 Jun 2026, 10:30  Practice (1h 0m)
+  🏁 Fri, 19 Jun 2026, 11:30  Practice (1h 0m)
+  ⏱ Sat, 20 Jun 2026, 11:00  Qualifying (1h 0m)
+  🏁 Sun, 21 Jun 2026, 15:00  Race (2h 0m)
 ```
 
 ```
@@ -63,81 +68,89 @@ $ f1 standings
 
   Drivers Championship
   ──── Drivers Championship
-┌───────┬──────────────────────────────┬──────────┬────────┐
-│ Pos   │ Name                         │ Points   │ Chg    │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥇 1  │ Kimi ANTONELLI               │ 156      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥈 2  │ Lewis HAMILTON               │ 115      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥉 3  │ George RUSSELL               │ 106      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 4     │ Charles LECLERC              │ 75       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 5     │ Lando NORRIS                 │ 73       │ +1     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 6     │ Oscar PIASTRI                │ 68       │ -1     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 7     │ Max VERSTAPPEN               │ 55       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 8     │ Pierre GASLY                 │ 41       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 9     │ Isack HADJAR                 │ 34       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 10    │ Liam LAWSON                  │ 28       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 11    │ Oliver BEARMAN               │ 18       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 12    │ Franco COLAPINTO             │ 16       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 13    │ Arvid LINDBLAD               │ 13       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 14    │ Carlos SAINZ                 │ 6        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 15    │ Alexander ALBON              │ 5        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 16    │ Esteban OCON                 │ 3        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 17    │ Gabriel BORTOLETO            │ 2        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 18    │ Fernando ALONSO              │ 1        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 19    │ Nico HULKENBERG              │ 0        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 20    │ Valtteri BOTTAS              │ 0        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 21    │ Sergio PEREZ                 │ 0        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 22    │ Lance STROLL                 │ 0        │ --     │
-└───────┴──────────────────────────────┴──────────┴────────┘
+  ┌───────┬────────────────────────────┬──────────┬──────────────────┬────────┐
+  │ Pos   │ Name                       │ Points   │ Bar              │ Chg    │
+  ├───────┼────────────────────────────┼──────────┼──────────────────┼────────┤
+  │ 🥇 1  │ Kimi ANTONELLI              │ 156      │ ████████████████ │ --     │
+  │ 🥈 2  │ Lewis HAMILTON              │ 115      │ ████████████░░░░ │ --     │
+  │ 🥉 3  │ George RUSSELL              │ 106      │ ███████████░░░░░ │ --     │
+  │ 4     │ Charles LECLERC             │ 75       │ ███████░░░░░░░░░ │ --     │
+  │ 5     │ Lando NORRIS                │ 73       │ ███████░░░░░░░░░ │ +1     │
+  │ 6     │ Oscar PIASTRI               │ 68       │ █████░░░░░░░░░░░ │ -1     │
+  │ 7     │ Max VERSTAPPEN              │ 55       │ █████░░░░░░░░░░░ │ --     │
+  └───────┴────────────────────────────┴──────────┴──────────────────┴────────┘
+```
 
-  Constructors Championship
-  ──── Constructors Championship
-┌───────┬──────────────────────────────┬──────────┬────────┐
-│ Pos   │ Name                         │ Points   │ Chg    │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥇 1  │ Mercedes                     │ 262      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥈 2  │ Ferrari                      │ 190      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 🥉 3  │ McLaren                      │ 141      │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 4     │ Red Bull Racing              │ 89       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 5     │ Alpine                       │ 57       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 6     │ Racing Bulls                 │ 41       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 7     │ Haas F1 Team                 │ 21       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 8     │ Williams                     │ 11       │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 9     │ Audi                         │ 2        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 10    │ Aston Martin                 │ 1        │ --     │
-├───────┼──────────────────────────────┼──────────┼────────┤
-│ 11    │ Cadillac                     │ 0        │ --     │
-└───────┴──────────────────────────────┴──────────┴────────┘
+```
+$ f1 circuit suzuka
+
+  Suzuka International Racing Course
+  Japanese Grand Prix -- Suzuka, Japan
+
+  Length:       5.807 km
+  Turns:        18
+  Direction:    Clockwise
+  First GP:     1987
+  Lap Record:   1:30.983 (Max Verstappen, 2023)
+
+    +------+        +----------+
+    |      |        |          |
+    | S/F  |   +----+    +--+  |
+    |      |   |         |  |  |
+    +---+  +---+         |  |  |
+        |                |  |  |
+        |   +------------+  |  |
+        |   |               |  |
+        |   |    +------+   |  |
+        |   |    |      |   |  |
+        +---+----+      +---+  |
+                       +------+
+                          |
+                     +----+
+```
+
+```
+$ f1 today
+
+  This Weekend: Spanish Grand Prix -- Barcelona, Spain
+
+  ┌──────────────────────────────┬──────────────────────────────────┬──────────────────┐
+  │ Session                      │ Date                             │ Local Time       │
+  ├──────────────────────────────┼──────────────────────────────────┼──────────────────┤
+  │ Practice 1 Starts in 10h 30m │ Fri, 19 Jun 2026                 │ 10:30            │
+  │ Practice 2 Starts in 11h 30m │ Fri, 19 Jun 2026                 │ 11:30            │
+  │ Qualifying Starts in 1d 11h  │ Sat, 20 Jun 2026                 │ 11:00            │
+  │ Race Starts in 2d 15h        │ Sun, 21 Jun 2026                 │ 15:00            │
+  └──────────────────────────────┴──────────────────────────────────┴──────────────────┘
+```
+
+## Install
+
+```
+npm install -g f1-cli
+```
+
+Or run without installing:
+
+```
+npx f1-cli schedule
+```
+
+### Homebrew
+
+```
+brew tap sleuthy-sloth/homebrew-tap
+brew install f1-cli
+```
+
+### From source
+
+```
+git clone https://github.com/sleuthy-sloth/f1-cli.git
+cd f1-cli
+npm install
+npm run build
+npm link
 ```
 
 ## Commands
@@ -145,46 +158,47 @@ $ f1 standings
 ### CLI mode
 
 ```
-f1 schedule
-  Show the next 5 upcoming races with session times in your local timezone.
-  Rounds are labeled with their real season number (e.g., round 10 of 24).
+f1 schedule       Next 5 races with session times in your local timezone
 
-f1 results [year] [round]
-  Show race results for a given year and round. Defaults to the most recent
-  completed race.
+f1 results        Race results for a given year/round (defaults to most recent)
+                  Driver names are team-colored using actual F1 hex codes.
+                  Country flag emojis on every driver. Gap-to-leader is
+                  color-coded (green < 5s, yellow 5-30s, red > 30s).
+                  ASCII podium graphic for the top 3.
 
-f1 standings [year]
-  Show current driver and constructor championship standings. Defaults to the
-  current season. Position change (+X/-X) shows movement since the previous
-  race. Top 3 drivers and teams are marked with podium medals.
+f1 standings      Driver and constructor championship standings with
+                  inline proportional bar charts. Top 3 get podium medals.
+                  Position change (+X/-X) since last race.
 
-f1 last
-  Quick summary of the most recent completed race -- winner, top 3, and full
-  top-10 results table.
+f1 last           Quick summary of the most recent completed race --
+                  winner, top 3, podium graphic, and full top-10 table.
 
-f1 today
-  What's happening this race weekend. Shows upcoming sessions if a race weekend
-  is in progress, or the next upcoming race if there's a gap.
+f1 today          What's happening this race weekend. Shows upcoming
+                  sessions with countdown timers. Blinking LIVE indicator
+                  when a session is active. Lap progress bar during the race.
 
-f1 driver [name]
-  Search for a driver by name (case-insensitive). Shows bio info, team,
-  championship position, and season points.
+f1 weekend        Visual timeline of the race weekend -- proportional
+                  session blocks, gaps between sessions, session breakdown
+                  with times and durations.
 
-f1 circuit [name]
-  Show an ASCII art track map and details for a circuit. Without a name,
-  lists all 23 circuits on the 2026 calendar. Matching is case-insensitive
-  and works on the circuit short name, full name, or Grand Prix name.
+f1 driver         Search for a driver by name (case-insensitive). Shows
+                  bio info, team, championship position, season points.
+                  Team-colored name, flag emoji.
 
-f1 next
-  Alias for "f1 today".
+f1 circuit        ASCII art track maps for all 23 F1 circuits. Shows
+                  circuit details -- length, turns, direction, lap record.
+                  Matching works on short name, full name, or GP name.
 
-f1 repl
-  Start the interactive REPL mode (see below).
+f1 next           Alias for f1 today.
+
+f1 repl           Interactive REPL mode (see below).
 ```
 
-### Interactive mode (REPL)
+Add `--json` to any command for raw JSON output.
 
-Run `f1` with no arguments, or `f1 repl`, to enter the interactive REPL. All commands are shown on startup so you never have to guess.
+### Interactive REPL
+
+Run `f1` with no arguments, or `f1 repl`, for the interactive REPL. All commands are shown on startup so you never have to guess what to type.
 
 ```
 $ f1
@@ -195,11 +209,11 @@ $ f1
   Interactive commands -- type any of these:
 
     schedule  sched    Show the next 5 upcoming races with session times
-    standings st       Show driver and constructor championship standings [year]
-    results   r        Show race results (defaults to most recent) [year] [round]
-    last      l        Quick summary of the most recent completed race
-    today     t, next  Show what is happening this race weekend
-    driver    d        Search for a driver by name and show bio + season stats [name]
+    standings st      Show driver and constructor championship standings [year]
+    results   r       Show race results (defaults to most recent) [year] [round]
+    last      l       Quick summary of the most recent completed race
+    today     t, next Show what is happening this race weekend
+    driver    d       Search for a driver by name and show bio + season stats [name]
     circuit   c, track Show ASCII track map and circuit details [name]
 
   Other commands
@@ -215,80 +229,90 @@ $ f1
 
  f1> /schedule
  f1> /standings 2025
- f1> /driver verstappen
- f1> verstappen          (no / needed for driver search)
+ f1> verstappen
  f1> /exit
 ```
 
 Features:
-- **Tab completion** -- type `/s` and press Tab to see matching commands
-- **Command aliases** -- `/st` for standings, `/r` for results, `/l` for last, etc.
-- **Driver search** -- type any driver name without `/` to search
-- **--json in REPL** -- `/standings --json` works inside the REPL too
-- **Always-visible help** -- all commands are listed on startup and via `/help`
+- Tab completion -- type `/s` and press Tab to see matching commands
+- Command aliases -- `/st` for standings, `/r` for results, `/l` for last
+- Driver search -- type any driver name without `/` to search
+- `--json` in REPL -- `/standings --json` works inside the REPL too
+- Type `/help` anytime to see all commands
 
-## Visual features
+### Natural language queries
 
-All tabular output includes:
+In the REPL, type questions in plain English:
 
-- **Header bars** — each table has a colored `────` bar above the title (F1 red), making sections easy to spot at a glance.
-- **Podium medals** — 🥇🥈🥉 appear next to the top 3 positions in standings, results, and last race output.
-- **Session type colors** — Race (green), Qualifying (yellow), Practice (blue), Sprint (orange) — each session type has its own color in schedule and today tables.
-- **Session emoji** — each session row has an emoji icon: 🏁 (Race), ⏱ (Qualifying), 📝 (Practice), ⚡ (Sprint).
-- **Alternating row dimming** — even-numbered rows are slightly dimmed so you can track lines across wide tables.
-- **Upcoming header** — the schedule table has a `──── Upcoming` header that turns red when there are races to show.
-- **Local timezone** — all session times are converted to your local time automatically. No more adding/subtracting UTC offsets.
-
-## Examples
-
-```bash
-# See the next 5 races
-f1 schedule
-
-# Get the most recent race results
-f1 results
-
-# Get results for a specific round
-f1 results 2025 3
-
-# Check championship standings
-f1 standings
-
-# Quick look at the last race
-f1 last
-
-# What's on this weekend
-f1 today
-
-# Show the track map for a specific circuit
-f1 circuit monza
-f1 circuit suzuka
+```
+f1> what is piastri's gap to hamilton?
+f1> how many points does verstappen have?
+f1> who won the last race?
+f1> leclerc vs sainz
+f1> when is the next race?
+f1> show me the weekend schedule
 ```
 
-## Why
+The parser recognizes patterns for:
+- Driver comparisons (X vs Y, gap between X and Y)
+- Points queries (how many points does X have)
+- Gap-to-leader queries
+- Last race results (who won, last race)
+- Next race / upcoming weekend
+- Weekend timeline / session schedule
+- Championship standings / leader
 
-The Ergast API -- the de facto free F1 data API for over a decade -- shut down at the end of 2024. Existing F1 CLI tools either relied on Ergast (now broken) or require paid API keys. This project replaces them with a tool that uses the new OpenF1 API, which provides free access to historical data (2023 onwards) with no sign-up required.
+If a query doesn't match a known pattern, it falls through to driver search.
+
+## What makes this different
+
+The Ergast API -- the free F1 data API that powered most terminal tools for over a decade -- shut down at the end of 2024. Existing F1 CLI tools either relied on Ergast (now broken) or require paid API keys. This replaces them with a tool that uses the new OpenF1 API, providing free access to historical data (2023 onwards) with no sign-up required.
 
 Things this does differently:
 
-- **Local timezone display.** Session times are converted to your local timezone automatically. No more manual UTC offset math.
-- **Table formatting.** Colored output with proper alignment, emoji, and podium medals -- not raw JSON.
+- **Local timezone display.** Session times convert to your local timezone automatically. No manual UTC offset math.
+- **Table formatting.** Colored output with proper alignment, emoji, podium medals, and proportional bar charts -- not raw JSON.
+- **Team colors.** Driver names and standings bars use actual F1 team hex codes (Mercedes cyan, Ferrari red, McLaren orange, etc.).
+- **Country flag emojis.** Each driver's flag appears next to their name using IOC-to-ISO country code mapping (26 countries).
+- **ASCII track maps.** Hand-crafted map art for all 23 circuits, with S/F line highlighted in F1 red.
 - **Caching.** API responses are cached for 30-60 seconds so repeated calls don't hammer the API.
-- **Rate limiting.** Built-in rate limiting keeps us polite to the free API.
+- **Rate limiting.** Built-in rate limiting keeps things polite to the free API.
+
+## Visual features
+
+Every table includes:
+
+- **Podium medals** -- gold/silver/bronze emoji next to positions 1-3
+- **Session type colors** -- Race (green), Qualifying (yellow), Practice (blue), Sprint (orange)
+- **Session emoji** -- checkered flag for races, stopwatch for qualifying, memo for practice, lightning for sprint
+- **Alternating row dimming** -- even rows are slightly dimmed so you can track lines across wide tables
+- **F1 red header bars** -- each section is topped with a colored separator line
+
+The `today` command also includes:
+- **Countdown timers** -- "Starts in 1d 5h", "Starts in 30m"
+- **Blinking LIVE indicator** -- animated during active sessions
+- **Lap progress bar** -- shows current lap count during the race
+
+The `weekend` command renders a full visual timeline:
+- Proportional session blocks (█ Race, ▓ Qualifying, ▒ Sprint, ░ Practice)
+- Gap indicators between sessions
+- Complete session breakdown with durations
+
+The `standings` command shows inline bar charts using block characters proportional to each driver's/team's points total relative to the leader.
 
 ## API
 
-This tool uses the [OpenF1 API](https://openf1.org/) for all data. Historical data (2023+) is free and requires no authentication. Real-time data requires a paid subscription.
+Uses the [OpenF1 API](https://openf1.org/) for all data. Historical data (2023+) is free with no authentication. Real-time data requires a paid subscription.
 
 ## Development
 
-```bash
+```
 git clone https://github.com/sleuthy-sloth/f1-cli.git
 cd f1-cli
 npm install
-npm run dev    # run with tsx (no build needed)
-npm run build  # compile TypeScript
-npm test       # run tests
+npm run dev      # run with tsx (no build needed)
+npm run build    # compile TypeScript
+npm test         # run tests
 ```
 
 ## License
