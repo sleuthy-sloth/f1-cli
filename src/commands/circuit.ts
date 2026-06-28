@@ -5,6 +5,8 @@ import chalk from 'chalk';
 import { CIRCUITS } from '../data/circuits.js';
 import type { Circuit } from '../data/circuits.js';
 
+const F1_RED = '#e10600';
+
 /**
  * Case-insensitive partial match against name, fullName, or gpName.
  */
@@ -36,14 +38,68 @@ function circuitMetadata(c: Circuit) {
 }
 
 /**
- * Render the ASCII track map with the start/finish line highlighted.
- * The maps already contain "S/F" text; we color it to make it stand out.
+ * DRS zone box-drawing characters -- rendered in cyan.
+ */
+const DRS_CHARS = new Set('═║╔╗╚╝╠╣╦╩╬');
+
+/**
+ * Normal track box-drawing characters -- rendered in white.
+ */
+const TRACK_CHARS = new Set('─│┌┐└┘├┤┬┴┼╱╲◄►');
+
+/**
+ * Render a single map line, applying character-based colors.
+ * Multi-character labels are handled first, then individual chars.
+ */
+function renderMapLine(line: string): string {
+  // Multi-character label patterns (applied before single-char processing)
+  let result = line
+    .replace(/S\/F/g, chalk.hex(F1_RED).bold('S/F'))
+    .replace(/\bDRS\b/g, chalk.cyan('DRS'))
+    .replace(/\bS([123])\b/g, (_m, n) => chalk.yellow(`S${n}`))
+    .replace(/\(PIT\)/g, chalk.blue('(PIT)'))
+    .replace(/\[PIT\]/g, chalk.blue('[PIT]'));
+
+  // Single-character color mapping
+  result = result
+    .split('')
+    .map((c) => {
+      if (DRS_CHARS.has(c)) return chalk.cyan(c);
+      if (TRACK_CHARS.has(c)) return chalk.white(c);
+      if (c === '=') return chalk.cyan(c);
+      if (c === '+' || c === '-' || c === '|') return chalk.white(c);
+      if (c === '/' || c === '\\') return chalk.white(c);
+      return c; // spaces, letter labels, numbers pass through
+    })
+    .join('');
+
+  return result;
+}
+
+/**
+ * Render the Legend (color key) shown below every track map.
+ */
+function legend(): string {
+  const hr = chalk.dim('─'.repeat(40));
+  const key: string[] = [
+    '',
+    `${hr}`,
+    `  ${chalk.white('──')} Normal track     ${chalk.cyan('══')} DRS zone`,
+    `  ${chalk.hex(F1_RED).bold('S/F')} Start/finish    ${chalk.yellow('S1')} ${chalk.yellow('S2')} ${chalk.yellow('S3')} Sector markers`,
+    `${hr}`,
+  ];
+  return key.join('\n');
+}
+
+/**
+ * Render the full track map for a circuit.
  */
 function renderMap(circuit: Circuit): string {
-  return circuit.map
-    .map((line) => line.replace('S/F', chalk.hex('#e10600').bold('S/F')))
-    .map((line) => `  ${line}`)
+  const mapLines = circuit.map
+    .map((line) => `  ${renderMapLine(line)}`)
     .join('\n');
+
+  return mapLines;
 }
 
 export async function circuitCommand(name?: string, jsonMode = false): Promise<void> {
@@ -189,6 +245,6 @@ export async function circuitCommand(name?: string, jsonMode = false): Promise<v
 
   // Print the ASCII track map
   console.log(renderMap(circuit));
-  console.log();
+  console.log(legend());
   printTrailingBlank();
 }
