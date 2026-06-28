@@ -2,6 +2,7 @@ import * as readline from 'node:readline';
 import { stdin, stdout } from 'node:process';
 import chalk from 'chalk';
 import { VERSION } from './version.js';
+import { parseNaturalLanguage } from './nlu.js';
 import { scheduleCommand } from './commands/schedule.js';
 import { resultsCommand } from './commands/results.js';
 import { standingsCommand } from './commands/standings.js';
@@ -131,6 +132,11 @@ function printHelp(): void {
   console.log();
   console.log(`  ${chalk.bold('Tips')}`);
   console.log(`    ${chalk.dim('-- Commands work with or without / (e.g.')} ${chalk.cyan('/schedule')} ${chalk.dim('or')} ${chalk.cyan('schedule')}${chalk.dim(')')}`);
+  console.log(`    ${chalk.dim('-- Ask questions in plain English, e.g.:')}`);
+  console.log(`    ${chalk.dim('   ')}${chalk.cyan("what is piastri's gap to hamilton?")}`);
+  console.log(`    ${chalk.dim('   ')}${chalk.cyan('how many points does verstappen have?')}`);
+  console.log(`    ${chalk.dim('   ')}${chalk.cyan('who won the last race?')}`);
+  console.log(`    ${chalk.dim('   ')}${chalk.cyan('leclerc vs sainz')}`);
   console.log(`    ${chalk.dim('-- Type a driver name to search (e.g.')} ${chalk.cyan('verstappen')}${chalk.dim(')')}`);
   console.log(`    ${chalk.dim('-- Add')} ${chalk.cyan('--json')} ${chalk.dim('to any command for raw JSON output')}`);
   console.log(`    ${chalk.dim('-- Press')} ${chalk.cyan('Tab')} ${chalk.dim('to autocomplete commands')}`);
@@ -203,8 +209,19 @@ export async function startRepl(): Promise<void> {
         const cleanArgs = parts.slice(1).filter((a) => a !== '--json');
         await runCommand([cmd.name, ...cleanArgs], rl, jsonMode);
       } else {
-        // Not a command -- treat as driver search
-        await runCommand(['driver', line], rl);
+        // Try natural language parsing before falling back to driver search
+        const nluResult = await parseNaturalLanguage(line, false);
+        if (nluResult) {
+          if (nluResult.handled) {
+            // NLU handler already produced output
+          } else if (nluResult.command) {
+            // NLU mapped to a command -- run it
+            await runCommand([nluResult.command, ...nluResult.args], rl, false);
+          }
+        } else {
+          // No NLU match -- treat as driver search
+          await runCommand(['driver', line], rl);
+        }
       }
       rl.prompt();
       return;
